@@ -2,10 +2,12 @@ import os
 import time
 import serial
 import uvicorn
+import tinytuya
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 # Carrega as variáveis do ficheiro .env na raiz
@@ -20,6 +22,12 @@ app = FastAPI(title="CasaIA - Central de Automação")
 class PerguntaIA(BaseModel):
     pergunta: str
 
+class ComandoTomada(BaseModel):
+    device_id: str
+    ip: str
+    local_key: str
+    acao: str  # "ligar", "desligar" ou "alternar"
+
 # -----------------------------------------------------------------------------
 # 2. ROTAS DA APLICAÇÃO
 # -----------------------------------------------------------------------------
@@ -33,33 +41,28 @@ def ler_index():
             return f.read()
     return "<h1>Erro: Ficheiro index.html não encontrado na pasta templates!</h1>"
 
-# Endpoint para servir a ração (Conexão Serial sob demanda para evitar PermissionError)
+# Endpoint para servir a ração
 @app.post("/api/alimentar")
 def alimentar_gato():
-    porta_com = 'COM7'
+    porta_com = '/dev/ttyACM0'  # No Raspberry Pi costuma ser /dev/ttyACM0 ou /dev/ttyUSB0
     try:
-        # Abre a porta apenas no momento do clique
         with serial.Serial(porta_com, 9600, timeout=1) as arduino:
-            time.sleep(2.5)  # Tempo de espera necessário para o reset do Arduino
+            time.sleep(2.5)
             
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
             
-            arduino.write(b'G')  # Envia o comando para o motor rodar
+            arduino.write(b'G')
             time.sleep(0.5)
             
             return {"status": "sucesso", "mensagem": "Comando enviado! Ração servida com sucesso."}
     except serial.SerialException as e:
         raise HTTPException(
             status_code=503,
-            detail=f"Não foi possível aceder à {porta_com}. Certifique-se de que a Arduino IDE está FECHADA. Erro: {e}"
+            detail=f"Erro ao conectar ao Arduino. Erro: {e}"
         )
 
 # Endpoint para o Chat de IA utilizando Gemini
-from google.genai import types
-
-# Endpoint para o Chat de IA utilizando Gemini
-# Lista global para armazenar o histórico da conversa na memória do servidor
 historico_chat = []
 
 @app.post("/api/ia/pergunta")
@@ -73,32 +76,60 @@ def perguntar_ia(payload: PerguntaIA):
     
     try:
         client = genai.Client(api_key=api_key)
-        
-        # Adiciona a nova mensagem do utilizador ao histórico
         historico_chat.append({"role": "user", "parts": [{"text": payload.pergunta}]})
         
-        # Envia todo o histórico de conversação para o Gemini manter o contexto
         response = client.models.generate_content(
             model='gemini-2.0-flash',
             contents=historico_chat
         )
         
-        # Adiciona a resposta da IA ao histórico
         historico_chat.append({"role": "model", "parts": [{"text": response.text}]})
-        
         return {"resposta": response.text}
     except Exception as e:
         print(f"[ERRO GEMINI] {e}")
         return {"resposta": "Desculpe, ocorreu um erro ao processar a conversa."}
 
-# Rota opcional para limpar a conversa quando você quiser
 @app.post("/api/ia/limpar")
 def limpar_historico():
     global historico_chat
     historico_chat = []
     return {"status": "sucesso", "mensagem": "Histórico de conversa limpo!"}
+
+# Endpoint para Controle das Tomadas Inteligentes (Smart Life / Tuya)
+@app.post("/api/tomada/controlar")
+def controlar_tomada(dados: ComandoTomada):
+    try:
+        device = tinytuya.OutletDevice(
+            dev_id=dados.device_id,
+            address=dados.ip,
+            local_key=dados.local_key,
+            version=3.3
+        )
+        
+        if dados.acao == "ligar":
+            device.turn_on()
+            status = "ligada"
+        elif dados.acao == "desligar":
+            device.turn_off()
+            status = "desligada"
+        elif dados.acao == "alternar":
+            estado_atual = device.status().get('dps', {}).get('1', False)
+            if estado_atual:
+                device.turn_off()
+                status = "desligada"
+            else:
+                device.turn_on()
+                status = "ligada"
+        else:
+            raise HTTPException(status_code=400, detail="Ação inválida")
+
+        return {"status": "sucesso", "estado": status}
+    
+    except Exception as e:
+        return {"status": "erro", "mensagem": str(e)}
+
 # -----------------------------------------------------------------------------
 # 3. INICIALIZAÇÃO DO SERVIDOR WEB
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
