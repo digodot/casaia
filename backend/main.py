@@ -31,6 +31,8 @@ from gtts import gTTS
 import pygame
 
 # Endpoint para a IA dar Bom Dia falado no alto-falante do Pi
+import tempfile
+
 @app.post("/api/automacao/bom-dia")
 def dar_bom_dia():
     api_key = os.getenv("GEMINI_API_KEY")
@@ -54,30 +56,39 @@ def dar_bom_dia():
             mensagem = "Bom dia! Tenha um excelente dia."
 
     try:
-        caminho_audio = os.path.join(os.path.dirname(__file__), "bom_dia.mp3")
+        # Gera o ficheiro de áudio com a resposta
+        tts = gTTS(text=mensagem, lang='pt', slow=False)
+        
+        # Cria um ficheiro temporário único com extensão .mp3 para evitar bloqueios de escrita
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            caminho_audio = fp.name
+            tts.save(caminho_audio)
 
-        # Se o mixer já estiver aberto, para e fecha para libertar o ficheiro anterior
+        # Para e reinicia o mixer do Pygame de forma limpa
         if pygame.mixer.get_init():
             pygame.mixer.music.stop()
             pygame.mixer.quit()
 
-        # Converte o texto gerado em áudio MP3
-        tts = gTTS(text=mensagem, lang='pt', slow=False)
-        tts.save(caminho_audio)
-
-        # Inicializa o áudio e reproduz
         pygame.mixer.init()
         pygame.mixer.music.load(caminho_audio)
         pygame.mixer.music.play()
 
-        # Aguarda a reprodução terminar em background sem bloquear a resposta
+        # Aguarda terminar a reprodução do áudio
         while pygame.mixer.music.get_busy():
             time.sleep(0.1)
 
-        # Encerra o mixer para libertar o ficheiro bom_dia.mp3
+        # Descarrega o ficheiro e fecha o áudio
+        pygame.mixer.music.unload()
         pygame.mixer.quit()
 
+        # Apaga o ficheiro temporário para não acumular lixo no disco
+        try:
+            os.remove(caminho_audio)
+        except Exception:
+            pass
+
         return {"status": "sucesso", "mensagem_falada": mensagem}
+        
     except Exception as e:
         print(f"[ERRO AUDIO] {e}")
         return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
