@@ -27,7 +27,47 @@ class ComandoTomada(BaseModel):
     ip: str
     local_key: str
     acao: str  # "ligar", "desligar" ou "alternar"
+from gtts import gTTS
+import pygame
 
+# Endpoint para a IA dar Bom Dia falado no alto-falante do Pi
+@app.post("/api/automacao/bom-dia")
+def dar_bom_dia():
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    # 1. Solicita uma mensagem amigável e curta ao Gemini 2.0 Flash
+    if not api_key:
+        mensagem = "Bom dia! Bem-vindo de volta à CasaIA."
+    else:
+        try:
+            client = genai.Client(api_key=api_key)
+            prompt = (
+                "Escreva uma saudação de bom dia muito curta, motivadora e natural "
+                "para o dono da casa inteligente CasaIA. Máximo 2 frases."
+            )
+            resposta = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=prompt
+            )
+            mensagem = resposta.text
+        except Exception as e:
+            print(f"[ERRO GEMINI VOZ] {e}")
+            mensagem = "Bom dia! Tenha um excelente dia."
+
+    # 2. Converte o texto gerado em áudio MP3 (em português)
+    try:
+        tts = gTTS(text=mensagem, lang='pt', slow=False)
+        caminho_audio = os.path.join(os.path.dirname(__file__), "bom_dia.mp3")
+        tts.save(caminho_audio)
+
+        # 3. Reproduz o arquivo de áudio no alto-falante conectado ao Pi
+        pygame.mixer.init()
+        pygame.mixer.music.load(caminho_audio)
+        pygame.mixer.music.play()
+
+        return {"status": "sucesso", "mensagem_falada": mensagem}
+    except Exception as e:
+        return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
 # -----------------------------------------------------------------------------
 # 2. ROTAS DA APLICAÇÃO
 # -----------------------------------------------------------------------------
@@ -133,3 +173,15 @@ def controlar_tomada(dados: ComandoTomada):
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+
+    # Endpoint rápido para acionar via Webhook/Google Assistant
+@app.get("/api/webhook/tomada/{acao}")
+def webhook_tomada(acao: str):
+    # Reutiliza a lógica da tomada inteligente
+    dados = ComandoTomada(
+        device_id="SEU_DEVICE_ID", # Coloque os dados reais quando estiver em casa
+        ip="192.168.10.X",
+        local_key="SUA_LOCAL_KEY",
+        acao=acao
+    )
+    return controlar_tomada(dados)

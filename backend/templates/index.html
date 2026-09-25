@@ -109,7 +109,28 @@
                         <button onclick="alterarModo('Festa')" class="py-2 px-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-100 transition">Festa</button>
                     </div>
                 </div>
+<!-- Botão no HTML -->
+<button 
+  onclick="dispararBomDia()" 
+  class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold text-sm transition active:scale-95 shadow">
+  ☀️ Tocar Bom Dia (Voz)
+</button>
 
+<script>
+async function dispararBomDia() {
+  try {
+    const res = await fetch('/api/automacao/bom-dia', { method: 'POST' });
+    const dados = await res.json();
+    if (dados.status === 'sucesso') {
+      alert("CasaIA falou: " + dados.mensagem_falada);
+    } else {
+      alert("Erro ao tocar áudio.");
+    }
+  } catch (err) {
+    console.error("Erro na requisição:", err);
+  }
+}
+</script>
                 <!-- Telemetria -->
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
                     <h3 class="text-xs font-bold opacity-80 mb-2">🌡️ AMBIENTE</h3>
@@ -207,7 +228,28 @@
 <button onclick="alimentarGato()" style="width: 100%; padding: 12px; margin-top: 8px; background-color: #cba6f7; color: #11111b; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">
   🐱 Alimentar Gato
 </button>
-
+<!-- Card da Tomada Inteligente Smart Life -->
+<div class="mt-4 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+  <div class="flex justify-between items-center mb-3">
+    <h3 class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+      ⚡ Tomada Inteligente
+    </h3>
+    <span id="status-tomada-direta" class="text-xs font-semibold text-amber-500">Pronto</span>
+  </div>
+  
+  <div class="grid grid-cols-2 gap-2">
+    <button 
+      onclick="controlarTomadaDireta('ligar')" 
+      class="py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold text-sm transition active:scale-95">
+      🟢 Ligar
+    </button>
+    <button 
+      onclick="controlarTomadaDireta('desligar')" 
+      class="py-2 px-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-semibold text-sm transition active:scale-95">
+      🔴 Desligar
+    </button>
+  </div>
+</div>
 <script>
   function alimentarGato() {
     fetch('/api/alimentar', { method: 'POST' })
@@ -1060,6 +1102,40 @@ function mudarAba(aba) {
     if (aba === "tuya" && typeof carregarDispositivosTuya === "function") carregarDispositivosTuya();
     if (aba === "praia") atualizarClima();
     if (aba === "historico" && typeof carregarHistorico === "function") carregarHistorico();
+}
+
+// Configuração Local da Tomada Smart Life
+const CONFIG_TOMADA_LOCAL = {
+  device_id: "SEU_DEVICE_ID", // Atualize quando chegar a casa
+  ip: "192.168.10.X",         // IP da tomada no Wi-Fi
+  local_key: "SUA_LOCAL_KEY"  // Chave obtida localmente
+};
+
+async function controlarTomadaDireta(acao) {
+  const statusElem = document.getElementById("status-tomada-direta");
+  if (statusElem) statusElem.innerText = "A processar...";
+
+  try {
+    const res = await fetch("/api/tomada/controlar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...CONFIG_TOMADA_LOCAL,
+        acao: acao
+      })
+    });
+    
+    const dados = await res.json();
+    if (dados.status === "sucesso") {
+      if (statusElem) statusElem.innerText = `Estado: ${dados.estado.toUpperCase()}`;
+    } else {
+      if (statusElem) statusElem.innerText = "Erro no envio";
+      alert("Erro ao comunicar com a tomada: " + (dados.mensagem || "Verifique o IP/Key"));
+    }
+  } catch (e) {
+    console.error("Erro na tomada:", e);
+    if (statusElem) statusElem.innerText = "Erro de conexão";
+  }
 }
     </script>
 </body>
