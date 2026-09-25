@@ -35,7 +35,6 @@ import pygame
 def dar_bom_dia():
     api_key = os.getenv("GEMINI_API_KEY")
     
-    # 1. Solicita uma mensagem amigável e curta ao Gemini 2.0 Flash
     if not api_key:
         mensagem = "Bom dia! Bem-vindo de volta à CasaIA."
     else:
@@ -54,19 +53,33 @@ def dar_bom_dia():
             print(f"[ERRO GEMINI VOZ] {e}")
             mensagem = "Bom dia! Tenha um excelente dia."
 
-    # 2. Converte o texto gerado em áudio MP3 (em português)
     try:
-        tts = gTTS(text=mensagem, lang='pt', slow=False)
         caminho_audio = os.path.join(os.path.dirname(__file__), "bom_dia.mp3")
+
+        # Se o mixer já estiver aberto, para e fecha para libertar o ficheiro anterior
+        if pygame.mixer.get_init():
+            pygame.mixer.music.stop()
+            pygame.mixer.quit()
+
+        # Converte o texto gerado em áudio MP3
+        tts = gTTS(text=mensagem, lang='pt', slow=False)
         tts.save(caminho_audio)
 
-        # 3. Reproduz o arquivo de áudio no alto-falante conectado ao Pi
+        # Inicializa o áudio e reproduz
         pygame.mixer.init()
         pygame.mixer.music.load(caminho_audio)
         pygame.mixer.music.play()
 
+        # Aguarda a reprodução terminar em background sem bloquear a resposta
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
+
+        # Encerra o mixer para libertar o ficheiro bom_dia.mp3
+        pygame.mixer.quit()
+
         return {"status": "sucesso", "mensagem_falada": mensagem}
     except Exception as e:
+        print(f"[ERRO AUDIO] {e}")
         return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
 # -----------------------------------------------------------------------------
 # 2. ROTAS DA APLICAÇÃO
