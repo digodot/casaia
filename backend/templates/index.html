@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CasaIA - Assistente Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-effect {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .gradient-pulse {
+            animation: pulse-gradient 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-gradient {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .dark { color-scheme: dark; }
+        .light { color-scheme: light; }
+        
+        .neon-border {
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+        
+        .neon-blue {
+            border-image: linear-gradient(135deg, #3b82f6, #1e40af) 1;
+        }
+        
+        .modal-overlay {
+            animation: fadeIn 0.2s ease-out;
+        }
+    </style>
+</head>
+<body class="light bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+
+    <!-- Header com Tema Toggle -->
+    <header class="sticky top-0 z-40 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="text-3xl">🏠</div>
+                <div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        CasaIA
+                    </h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Seu assistente residencial inteligente</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button id="btn-tema" onclick="alterarTema()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                    <span id="icon-tema">🌙</span>
+                </button>
+                
+                <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+                    <span id="status-dot" class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
+                    <span id="status-text">Conectando...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            
+            <!-- Modo da Casa + Estado Rápido -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <!-- Modo Casa -->
+                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                    <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4">MODO DA CASA</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="alterarModo('Normal')" class="py-2 px-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:bg-blue-100 dark:hover:bg-blue-800/50 transition">Normal</button>
+                        <button onclick="alterarModo('Noite')" class="py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold text-sm hover:bg-gray-100 transition">Noite</button>
+                        <button onclick="alterarModo('Ausência')" class="py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold text-sm hover:bg-gray-100 transition">Ausência</button>
+                        <button onclick="alterarModo('Festa')" class="py-2 px-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-100 transition">Festa</button>
+                    </div>
+                </div>
+
+                <!-- Telemetria -->
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                    <h3 class="text-xs font-bold opacity-80 mb-2">🌡️ AMBIENTE</h3>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="text-4xl font-black gradient-pulse">
+                                <span id="temp-valor">--</span>°C
+                            </div>
+                            <p class="text-sm opacity-90">Temperatura</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold">
+                                <span id="umidade-valor">--</span>%
+                            </div>
+                            <p class="text-sm opacity-90">Umidade</p>
+                        </div>
+                    </div>
+                    <div class="text-xs opacity-75" id="dispositivo-info">Aguardando sensor...</div>
+                </div>
+
+                <!-- Energia -->
+                <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+                    <h3 class="text-xs font-bold opacity-80 mb-2">⚡ CONSUMO HOJE</h3>
+                    <div class="text-4xl font-black mb-2">14.8 <span class="text-lg">kWh</span></div>
+                    <div class="bg-white/20 rounded-lg p-3 backdrop-blur-sm">
+                        <p class="text-xs opacity-90">📊 Dentro do esperado</p>
+                        <div class="w-full bg-white/30 rounded-full h-1 mt-2">
+                            <div class="bg-white h-full rounded-full" style="width: 65%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de Conteúdo -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Chat com IA (grande) -->
+                <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col" style="height: 600px;">
+                    
+                    <div class="border-b border-gray-200 dark:border-gray-800 p-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🤖</span>
+                            <div>
+                                <h2 class="font-bold text-gray-900 dark:text-white">Assistente IA</h2>
+                                <p class="text-xs text-gray-500">Powered by Groq</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3" style="max-height: 400px;">
+                        <div class="chat-message flex gap-3">
+                            <span class="text-xl">🤖</span>
+                            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 max-w-xs">
+                                <p class="text-sm">Olá! Sou seu assistente CasaIA. Como posso ajudar sua casa?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 dark:border-gray-800 p-4">
+                        <div class="flex gap-2">
+                            <input type="text" id="input-ia" placeholder="Faça uma pergunta à IA..." 
+                                   class="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   onkeypress="if(event.key==='Enter') enviarPerguntaIA()">
+                            <button onclick="enviarPerguntaIA()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all">
+                                Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Direita -->
+                <div class="space-y-6">
+                    
+                    <!-- Comandos Rápidos -->
+                    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            ⚡ Comandos Rápidos
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="enviarComandoDireto('abrir')" class="w-full py-2 px-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-800/40 font-semibold text-sm transition">
+                                🟢 Abrir Janela
+                            </button>
+                            <button onclick="enviarComandoDireto('fechar')" class="w-full py-2 px-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-800/40 font-semibold text-sm transition">
+                                🔴 Fechar Janela
+                            </button>
+                            <button onclick="enviarComandoDireto('luzes')" class="w-full py-2 px-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-800/40 font-semibold text-sm transition">
+                                💡 Luzes
+                            </button>
+                            <button onclick="enviarComandoDireto('ar condicionado')" class="w-full py-2 px-3 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400 rounded-lg hover:bg-cyan-100 dark:hover:bg-cyan-800/40 font-semibold text-sm transition">
+                                ❄️ AC
+                            </button>
+                        </div>
+                    </div>
+<!-- Botão do Alimentador do Gato -->
+<button onclick="alimentarGato()" style="width: 100%; padding: 12px; margin-top: 8px; background-color: #cba6f7; color: #11111b; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">
+  🐱 Alimentar Gato
+</button>
+
+<script>
+  function alimentarGato() {
+    fetch('/api/alimentar', { method: 'POST' })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) {
+          // Exibe a mensagem de erro detalhada retornada pela API
+          alert(data.detail || "Erro no servidor ao tentar acionar a porta COM.");
+        } else {
+          alert(data.mensagem);
+        }
+      })
+      .catch(error => {
+        alert("Erro de conexão com o servidor FastAPI.");
+        console.error('Erro:', error);
+      });
+  }
+</script>
+                    <!-- Atalhos IA -->
+                    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            ✨ Perguntas Populares
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="perguntaRapida('Como economizar energia?')" class="w-full text-left text-sm p-2 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
+                                💰 Economizar energia?
+                            </button>
+                            <button onclick="perguntaRapida('Como aproveitar os ingredientes que vão vencer?')" class="w-full text-left text-sm p-2 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
+                                🍳 Receita urgente?
+                            </button>
+                            <button onclick="perguntaRapida('Qual é a melhor temperatura para dormir?')" class="w-full text-left text-sm p-2 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-300">
+                                😴 Dormir bem?
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas de Funcionalidades -->
+            <div class="mt-8">
+                <div class="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-800">
+                    <button onclick="mudarAba('despensa')" class="aba-btn active px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400">
+                        🍎 Despensa
+                    </button>
+                    <button onclick="mudarAba('automacoes')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
+                        🔧 Automações
+                    </button>
+                    <button onclick="mudarAba('tuya')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
+    🏠 Tuya
+</button>
+<!-- ABA: Tuya Devices -->
+<div id="aba-tuya" class="aba-content hidden">
+    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+        
+        <h2 class="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            🏠 Dispositivos Tuya
+        </h2>
+
+        <div id="tuya-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Preenchido por JavaScript -->
+        </div>
+    </div>
+</div>
+                    <button onclick="mudarAba('historico')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
+                        📜 Histórico
+                    </button>
+                </div>
+
+                <!-- ABA: Despensa -->
+                <div id="aba-despensa" class="aba-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Adicionar Item -->
+                        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-4">➕ Novo Item</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="despensa-item" placeholder="Nome do item" 
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="number" id="despensa-qtd" placeholder="Quantidade" 
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <select id="despensa-unidade" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                    <option value="kg">kg</option>
+                                    <option value="L">L</option>
+                                    <option value="un">un</option>
+                                </select>
+                                <input type="date" id="despensa-validade" 
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="number" id="despensa-consumo" placeholder="Consumo diário" value="0.2" step="0.1"
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <button onclick="adicionarItemDespensa()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+                                    Adicionar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Lista -->
+                        <div class="lg:col-span-2">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-900 dark:text-white">Itens em Estoque</h3>
+                                <button onclick="sugerirReceitas()" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition">
+                                    🧑‍🍳 Receitas IA
+                                </button>
+                            </div>
+                            <div class="space-y-3 max-h-96 overflow-y-auto">
+                                <div id="tabela-despensa-moderna"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<button onclick="mudarAba('praia')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
+    🏖️ Praia
+</button>
+                <!-- ABA: Automações -->
+                <div id="aba-automacoes" class="aba-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Criar Automação -->
+                        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-4">⚙️ Nova Automação</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="auto-nome" placeholder="Nome (ex: Luzes noturnas)" 
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="text" id="auto-condicao" placeholder="Condição (ex: temperatura > 28)" 
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="text" id="auto-acao" placeholder="Ação (ex: ligar AC)" 
+                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <button onclick="criarAutomacao()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">
+                                    Criar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Automações Ativas -->
+                        <div class="lg:col-span-2">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-4">🤖 Regras Ativas</h3>
+                            <div id="lista-automacoes" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+<!-- ABA: Praia & Maré -->
+<div id="aba-praia" class="aba-content hidden">
+    <div class="space-y-6">
+        
+        <!-- Seletor de Cidade -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+            <h3 class="font-bold text-gray-900 dark:text-white mb-4">🌍 Escolha sua Cidade</h3>
+            
+            <div class="flex gap-2">
+                <select id="cidade-select" class="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                    <option value="Recife">🏖️ Recife</option>
+                    <option value="Rio de Janeiro">🏖️ Rio de Janeiro</option>
+                    <option value="Salvador">🏖️ Salvador</option>
+                    <option value="Fortaleza">🏖️ Fortaleza</option>
+                    <option value="Natal">🏖️ Natal</option>
+                    <option value="Maceió">🏖️ Maceió</option>
+                </select>
+                <button onclick="atualizarClima()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+                    🔄 Atualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Clima Atual -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+            <h3 class="text-lg font-bold mb-4">🌡️ Clima Atual</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm opacity-80">Temperatura</p>
+                    <p id="clima-temp" class="text-3xl font-bold">--°C</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">Sensação</p>
+                    <p id="clima-sensacao" class="text-3xl font-bold">--°C</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">Umidade</p>
+                    <p id="clima-umidade" class="text-2xl font-bold">--%</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">Vento</p>
+                    <p id="clima-vento" class="text-2xl font-bold">-- km/h</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-white/20">
+                <p class="text-sm opacity-90">Condição:</p>
+                <p id="clima-condicao" class="text-lg font-semibold">Carregando...</p>
+            </div>
+        </div>
+
+        <!-- Dados de Maré -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+            <h3 class="text-lg font-bold mb-4">🌊 Dados de Maré</h3>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-sm opacity-80">Próxima Maré Alta</p>
+                    <p id="mare-alta" class="text-2xl font-bold">--:--</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">Próxima Maré Baixa</p>
+                    <p id="mare-baixa" class="text-2xl font-bold">--:--</p>
+                </div>
+            </div>
+            
+            <div class="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+                <p class="text-sm opacity-90">📍 Melhor horário para praia:</p>
+                <p id="mare-melhor-hora" class="text-2xl font-bold">--:--</p>
+                <p id="mare-condicao" class="text-sm opacity-90 mt-2">Carregando...</p>
+            </div>
+        </div>
+
+        <!-- Sugestão IA -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+            <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                🤖 Sugestão Inteligente
+            </h3>
+            
+            <div id="sugestao-praia" class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <p class="text-gray-600 dark:text-gray-300">Carregando sugestão...</p>
+            </div>
+            
+            <button onclick="obterSugestaoIA()" class="w-full mt-4 py-2 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-semibold transition">
+                💡 Obter Sugestão
+            </button>
+        </div>
+    </div>
+</div>
+                <!-- ABA: Histórico -->
+                <div id="aba-historico" class="aba-content hidden">
+                    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+                        <div id="historico-comandos" class="divide-y divide-gray-200 dark:divide-gray-800"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Receitas -->
+    <div id="modal-receita" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 modal-overlay">
+        <div class="bg-white dark:bg-gray-900 rounded-xl max-w-lg w-full p-6 shadow-xl space-y-4">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">🧑‍🍳 Sugestão Inteligente</h3>
+            <p id="conteudo-receita" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700"></p>
+            <div class="text-right">
+                <button onclick="fecharModal()" class="px-4 py-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white rounded-lg transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== VARIÁVEIS GLOBAIS ==========
+        let tema_atual = localStorage.getItem("tema") || "light";
+        let aba_atual = "despensa";
+
+        // ========== TEMA (DARK/LIGHT) ==========
+        function inicializarTema() {
+            aplicarTema(tema_atual);
+        }
+
+        function alterarTema() {
+            tema_atual = tema_atual === "light" ? "dark" : "light";
+            localStorage.setItem("tema", tema_atual);
+            aplicarTema(tema_atual);
+        }
+
+        function aplicarTema(t) {
+            document.documentElement.classList.remove("light", "dark");
+            document.body.classList.remove("light", "dark");
+            document.documentElement.classList.add(t);
+            document.body.classList.add(t);
+            
+            const icon = document.getElementById("icon-tema");
+            icon.textContent = t === "light" ? "🌙" : "☀️";
+        }
+
+        // ========== WEBSOCKET (TELEMETRIA) ==========
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        
+        ws.onopen = () => {
+            atualizarStatusConexao(true);
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const dados = JSON.parse(event.data);
+                if (dados.tipo === "telemetria") {
+                    document.getElementById("temp-valor").textContent = dados.temperatura.toFixed(1);
+                    document.getElementById("umidade-valor").textContent = dados.umidade.toFixed(0);
+                    document.getElementById("dispositivo-info").textContent = `📡 ${dados.dispositivo_id}`;
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        ws.onclose = () => {
+            atualizarStatusConexao(false);
+        };
+
+        function atualizarStatusConexao(conectado) {
+            const dot = document.getElementById("status-dot");
+            const text = document.getElementById("status-text");
+            if (conectado) {
+                dot.classList.add("bg-emerald-500");
+                dot.classList.remove("bg-gray-400");
+                text.textContent = "Sistema Online";
+            } else {
+                dot.classList.remove("bg-emerald-500");
+                dot.classList.add("bg-gray-400");
+                text.textContent = "Desconectado";
+            }
+        }
+
+        // ========== IA & CHAT ==========
+        async function enviarPerguntaIA() {
+            const input = document.getElementById("input-ia");
+            const pergunta = input.value.trim();
+            
+            if (!pergunta) return;
+            
+            // Mostrar pergunta do usuário
+            adicionarMensagemChat(pergunta, "usuario");
+            input.value = "";
+            input.focus();
+            
+            try {
+                const res = await fetch("/api/ia/pergunta", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pergunta })
+                });
+                const dados = await res.json();
+                adicionarMensagemChat(dados.resposta, "ia");
+            } catch (e) {
+                adicionarMensagemChat("Erro ao conectar com a IA", "erro");
+            }
+        }
+
+        function adicionarMensagemChat(texto, tipo) {
+            const container = document.getElementById("chat-container");
+            const msg = document.createElement("div");
+            msg.className = "chat-message flex gap-3";
+            
+            if (tipo === "usuario") {
+                msg.innerHTML = `
+                    <div class="ml-auto bg-blue-500 text-white rounded-lg p-3 max-w-xs">
+                        <p class="text-sm">${escapeHtml(texto)}</p>
+                    </div>
+                    <span class="text-xl">👤</span>
+                `;
+            } else if (tipo === "ia") {
+                msg.innerHTML = `
+                    <span class="text-xl">🤖</span>
+                    <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 max-w-xs">
+                        <p class="text-sm">${escapeHtml(texto)}</p>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function perguntaRapida(texto) {
+            document.getElementById("input-ia").value = texto;
+            enviarPerguntaIA();
+        }
+
+        // ========== COMANDOS ==========
+        async function enviarComandoDireto(acao) {
+            try {
+                const res = await fetch("/executar-comando", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ comando: acao })
+                });
+                const dados = await res.json();
+                adicionarMensagemChat(dados.resposta, "ia");
+            } catch (e) {
+                adicionarMensagemChat("Erro ao executar comando", "erro");
+            }
+        }
+
+        // ========== MODO CASA ==========
+        async function alterarModo(modo) {
+            await fetch(`/api/modo?modo=${modo}`, { method: "POST" });
+            alert(`Modo alterado para: ${modo}`);
+        }
+
+        // ========== DESPENSA ==========
+        async function carregarDespensa() {
+            try {
+                const res = await fetch("/api/despensa");
+                const itens = await res.json();
+                const container = document.getElementById("tabela-despensa-moderna");
+                container.innerHTML = "";
+                
+                itens.forEach(item => {
+                    let badge = "✅ OK";
+                    let cor = "emerald";
+                    if (item.status_validade === "CRÍTICO") {
+                        badge = "⚠️ CRÍTICO";
+                        cor = "rose";
+                    } else if (item.status_validade === "ALERTA") {
+                        badge = "⚠️ ALERTA";
+                        cor = "amber";
+                    }
+                    
+                    const div = document.createElement("div");
+                    div.className = `bg-${cor}-50 dark:bg-${cor}-900/20 border border-${cor}-200 dark:border-${cor}-800 rounded-lg p-3 fade-in`;
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="font-bold text-gray-900 dark:text-white">${item.item}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">${item.quantidade} ${item.unidade}</p>
+                            </div>
+                            <button onclick="deletarItem(${item.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs">✕</button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs bg-${cor}-100 dark:bg-${cor}-800 text-${cor}-700 dark:text-${cor}-300 px-2 py-1 rounded">${badge}</span>
+                            <span class="text-xs text-gray-500">Vence em ${item.dias_para_estragar}d</span>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function adicionarItemDespensa() {
+            const item = document.getElementById("despensa-item").value;
+            const quantidade = parseFloat(document.getElementById("despensa-qtd").value);
+            const unidade = document.getElementById("despensa-unidade").value;
+            const validade = document.getElementById("despensa-validade").value;
+            const consumo = parseFloat(document.getElementById("despensa-consumo").value);
+            
+            if (!item || !quantidade || !validade) {
+                alert("Preencha todos os campos!");
+                return;
+            }
+            
+            await fetch("/api/despensa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ item, quantidade, unidade, validade, consumo_diario: consumo })
+            });
+            
+            document.getElementById("despensa-item").value = "";
+            document.getElementById("despensa-qtd").value = "";
+            document.getElementById("despensa-validade").value = "";
+            
+            carregarDespensa();
+        }
+
+        async function deletarItem(id) {
+            await fetch(`/api/despensa/${id}`, { method: "DELETE" });
+            carregarDespensa();
+        }
+
+        async function sugerirReceitas() {
+            try {
+                const res = await fetch("/api/despensa/receitas", { method: "POST" });
+                const dados = await res.json();
+                document.getElementById("conteudo-receita").textContent = dados.receita;
+                document.getElementById("modal-receita").classList.remove("hidden");
+            } catch (e) {
+                alert("Erro ao carregar receitas");
+            }
+        }
+
+        function fecharModal() {
+            document.getElementById("modal-receita").classList.add("hidden");
+        }
+
+        // ========== AUTOMAÇÕES ==========
+        async function carregarAutomacoes() {
+            try {
+                const res = await fetch("/api/automacoes");
+                const autos = await res.json();
+                const container = document.getElementById("lista-automacoes");
+                container.innerHTML = "";
+                
+                autos.forEach(auto => {
+                    const div = document.createElement("div");
+                    div.className = "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-gray-900 dark:text-white">${auto.nome}</h4>
+                            <button onclick="deletarAutomacao(${auto.id})" class="text-rose-500 text-xs font-bold">Remover</button>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">📊 Se: ${auto.condicao}</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">⚙️ Então: ${auto.acao}</p>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function criarAutomacao() {
+            const nome = document.getElementById("auto-nome").value;
+            const condicao = document.getElementById("auto-condicao").value;
+            const acao = document.getElementById("auto-acao").value;
+            
+            if (!nome || !condicao || !acao) {
+                alert("Preencha todos os campos!");
+                return;
+            }
+            
+            await fetch("/api/automacoes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, condicao, acao })
+            });
+            
+            document.getElementById("auto-nome").value = "";
+            document.getElementById("auto-condicao").value = "";
+            document.getElementById("auto-acao").value = "";
+            
+            carregarAutomacoes();
+        }
+
+        async function deletarAutomacao(id) {
+            await fetch(`/api/automacoes/${id}`, { method: "DELETE" });
+            carregarAutomacoes();
+        }
+
+        // ========== HISTÓRICO ==========
+        async function carregarHistorico() {
+            try {
+                const res = await fetch("/api/historico?limite=15");
+                const comandos = await res.json();
+                const container = document.getElementById("historico-comandos");
+                container.innerHTML = "";
+                
+                comandos.forEach(cmd => {
+                    const div = document.createElement("div");
+                    div.className = "p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition";
+                    const hora = new Date(cmd.timestamp).toLocaleTimeString('pt-BR');
+                    div.innerHTML = `
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">💬 ${escapeHtml(cmd.comando)}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${cmd.resposta}</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">⏰ ${hora}</p>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // ========== ABAS ==========
+        // ========== NAVEGAÇÃO UNIFICADA DE ABAS ==========
+function mudarAba(aba) {
+    // Esconde todos os conteúdos de abas
+    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
+    
+    // Reseta o estilo de todos os botões de abas
+    document.querySelectorAll(".aba-btn").forEach(el => {
+        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+        el.classList.add("border-b-2", "border-transparent");
+    });
+    
+    // Exibe a aba selecionada
+    const abaEl = document.getElementById(`aba-${aba}`);
+    if (abaEl) abaEl.classList.remove("hidden");
+    
+    // Destaca o botão ativado se o evento existir
+    if (window.event && window.event.target) {
+        window.event.target.classList.remove("border-transparent");
+        window.event.target.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+    }
+    
+    // Executa o carregamento específico de cada aba
+    if (aba === "despensa") carregarDespensa();
+    if (aba === "automacoes") carregarAutomacoes();
+    if (aba === "tuya") carregarDispositivosTuya();
+    if (aba === "praia") atualizarClima();
+    if (aba === "historico") carregarHistorico();
+}
+
+        // ========== UTILITÁRIOS ==========
+        function escapeHtml(texto) {
+            const div = document.createElement("div");
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+
+        // ========== INICIALIZAÇÃO ==========
+        document.addEventListener("DOMContentLoaded", () => {
+            inicializarTema();
+            carregarDespensa();
+            carregarAutomacoes();
+        });
+
+        // ========== TUYA DEVICES ==========
+async function carregarDispositivosTuya() {
+    try {
+        const res = await fetch("/api/tuya/dispositivos");
+        const dispositivos = await res.json();
+        
+        const container = document.getElementById("tuya-lista");
+        container.innerHTML = "";
+        
+        dispositivos.forEach(d => {
+            const icone = d.tipo === "luz" ? "💡" : "🔌";
+            const status = d.status === "offline" ? "❌ Offline" : "✅ Online";
+            
+            const html = `
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="font-bold text-gray-900 dark:text-white">${icone} ${d.nome}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${d.tipo}</p>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded">
+                            ${status}
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <button onclick="controlarTuya('${d.nome}', true)" 
+                                class="w-full py-2 px-3 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded transition">
+                            ✅ Ligar
+                        </button>
+                        <button onclick="controlarTuya('${d.nome}', false)" 
+                                class="w-full py-2 px-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded transition">
+                            ❌ Desligar
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    } catch (e) {
+        console.error("Erro ao carregar Tuya", e);
+        document.getElementById("tuya-lista").innerHTML = '<p class="text-red-600">Erro ao conectar Tuya</p>';
+    }
+}
+
+async function controlarTuya(nome, estado) {
+    try {
+        const res = await fetch(`/api/tuya/controlar?nome=${nome}&estado=${estado}`, {
+            method: "POST"
+        });
+        const dados = await res.json();
+        
+        if (dados.sucesso) {
+            adicionarMensagemChat(`🏠 ${nome}: ${dados.estado}`, "ia");
+            await carregarDispositivosTuya();
+        } else {
+            alert(`Erro: ${dados.erro}`);
+        }
+    } catch (e) {
+        console.error("Erro ao controlar Tuya", e);
+        alert("Erro ao controlar dispositivo");
+    }
+}
+
+// Carregar Tuya ao abrir aba
+function mudarAba(aba) {
+    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
+    document.querySelectorAll(".aba-btn").forEach(el => {
+        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+        el.classList.add("border-b-2", "border-transparent");
+    });
+    
+    document.getElementById(`aba-${aba}`).classList.remove("hidden");
+    event.target.classList.remove("border-transparent");
+    event.target.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+    
+    if (aba === "tuya") {
+        carregarDispositivosTuya();
+    }
+}
+
+// ========== PRAIA & MARÉ ==========
+async function atualizarClima() {
+    try {
+        const cidade = document.getElementById("cidade-select").value;
+        
+        const res = await fetch(`/api/clima/atualizar/${cidade}`, {
+            method: "POST"
+        });
+        
+        const dados = await res.json();
+        
+        // Atualizar clima
+        document.getElementById("clima-temp").textContent = dados.clima.temperatura.toFixed(1) + "°C";
+        document.getElementById("clima-sensacao").textContent = dados.clima.sensacao.toFixed(1) + "°C";
+        document.getElementById("clima-umidade").textContent = dados.clima.umidade + "%";
+        document.getElementById("clima-vento").textContent = dados.clima.velocidade_vento.toFixed(0) + " km/h";
+        document.getElementById("clima-condicao").textContent = dados.clima.condicao;
+        
+        // Atualizar maré
+        document.getElementById("mare-alta").textContent = dados.mare.proxima_alta;
+        document.getElementById("mare-baixa").textContent = dados.mare.proxima_baixa;
+        document.getElementById("mare-melhor-hora").textContent = dados.mare.melhor_hora;
+        document.getElementById("mare-condicao").textContent = dados.mare.condicao;
+        
+    } catch (e) {
+        console.error("Erro ao atualizar clima", e);
+        alert("Erro ao atualizar dados");
+    }
+}
+
+async function obterSugestaoIA() {
+    try {
+        const container = document.getElementById("sugestao-praia");
+        container.innerHTML = '<p class="text-gray-500">🤖 A IA está gerando sua dica de praia...</p>';
+        
+        const res = await fetch("/api/praia/sugestao");
+        const dados = await res.json();
+        
+        container.innerHTML = `
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
+                    <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
+                </div>
+                <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
+                    <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("Erro ao obter sugestão:", e);
+        document.getElementById("sugestao-praia").innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
+    }
+}
+
+// Carregar ao abrir aba
+function mudarAba(aba) {
+    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
+    document.querySelectorAll(".aba-btn").forEach(el => {
+        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+        el.classList.add("border-b-2", "border-transparent");
+    });
+    
+    document.getElementById(`aba-${aba}`).classList.remove("hidden");
+    event.target.classList.remove("border-transparent");
+    event.target.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+    
+    if (aba === "praia") {
+        atualizarClima();
+    }
+}
+async function obterSugestaoIA() {
+    try {
+        const container = document.getElementById("sugestao-praia");
+        container.innerHTML = '<p class="text-gray-500">🤖 A IA está gerando sua dica de praia...</p>';
+        
+        const res = await fetch("/api/praia/sugestao");
+        const dados = await res.json();
+        
+        container.innerHTML = `
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
+                    <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
+                </div>
+                <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
+                    <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("Erro ao obter sugestão:", e);
+        document.getElementById("sugestao-praia").innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
+    }
+}
+// ========== MÓDULO PRAIA & CLIMA ==========
+async function atualizarClima() {
+    const cidadeSelect = document.getElementById("select-cidade");
+    const cidade = cidadeSelect ? cidadeSelect.value : "Recife";
+    
+    try {
+        const response = await fetch(`/api/clima/atualizar/${encodeURIComponent(cidade)}`, {
+            method: "POST"
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        const dados = await response.json();
+        
+        // Atualiza dados na tela
+        if (document.getElementById("temp-atual")) document.getElementById("temp-atual").innerText = `${dados.temperatura || '--'}°C`;
+        if (document.getElementById("sensacao-atual")) document.getElementById("sensacao-atual").innerText = `${dados.sensacao || '--'}°C`;
+        if (document.getElementById("umidade-atual")) document.getElementById("umidade-atual").innerText = `${dados.umidade || '--'}%`;
+        if (document.getElementById("vento-atual")) document.getElementById("vento-atual").innerText = `${dados.vento || '--'} km/h`;
+        if (document.getElementById("condicao-atual")) document.getElementById("condicao-atual").innerText = dados.condicao || 'Desconhecido';
+        
+        // Atualiza Maré
+        if (document.getElementById("mare-alta")) document.getElementById("mare-alta").innerText = dados.proxima_alta || '--:--';
+        if (document.getElementById("mare-baixa")) document.getElementById("mare-baixa").innerText = dados.proxima_baixa || '--:--';
+        if (document.getElementById("melhor-horario")) document.getElementById("melhor-horario").innerText = dados.melhor_hora || '--:--';
+        if (document.getElementById("condicao-mare")) document.getElementById("condicao-mare").innerText = dados.condicao_mare || 'Normal';
+        
+        obterSugestaoIA();
+
+    } catch (e) {
+        console.error("Erro ao atualizar clima:", e);
+    }
+}
+
+async function obterSugestaoIA() {
+    const container = document.getElementById("sugestao-praia");
+    if (!container) return;
+    
+    try {
+        container.innerHTML = '<p class="text-gray-500">🤖 A IA está gerando sua dica de praia...</p>';
+        const res = await fetch("/api/praia/sugestao");
+        const dados = await res.json();
+        
+        container.innerHTML = `
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
+                    <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
+                </div>
+                <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
+                    <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("Erro ao obter sugestão:", e);
+        container.innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
+    }
+}
+
+// ========== NAVEGAÇÃO ENTRE ABAS ==========
+function mudarAba(aba) {
+    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
+    
+    document.querySelectorAll(".aba-btn").forEach(el => {
+        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+        el.classList.add("border-b-2", "border-transparent");
+    });
+    
+    const abaEl = document.getElementById(`aba-${aba}`);
+    if (abaEl) abaEl.classList.remove("hidden");
+    
+    if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.remove("border-transparent");
+        window.event.currentTarget.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+    }
+    
+    if (aba === "despensa" && typeof carregarDespensa === "function") carregarDespensa();
+    if (aba === "automacoes" && typeof carregarAutomacoes === "function") carregarAutomacoes();
+    if (aba === "tuya" && typeof carregarDispositivosTuya === "function") carregarDispositivosTuya();
+    if (aba === "praia") atualizarClima();
+    if (aba === "historico" && typeof carregarHistorico === "function") carregarHistorico();
+}
+    </script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Residencial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#121826',
+                        cardbg: '#1b2436'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-darkbg text-gray-900 dark:text-gray-100 min-h-screen">
+
+    <!-- Navegação / Topbar -->
+    <nav class="bg-white dark:bg-cardbg border-b border-gray-200 dark:border-gray-800 p-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400">Automação Residencial</h1>
+                <span id="ws-status" class="px-2 py-0.5 text-xs rounded-full bg-yellow-500/20 text-yellow-500 font-medium">Conectando...</span>
+            </div>
+
+            <!-- Navegação por Abas -->
+            <div class="flex flex-wrap gap-2 text-sm font-medium">
+                <button onclick="mudarAba('principal')" class="aba-btn px-3 py-1.5 rounded-lg border-b-2 border-blue-600 text-blue-600 dark:text-blue-400">Geral</button>
+                <button onclick="mudarAba('despensa')" class="aba-btn px-3 py-1.5 rounded-lg border-b-2 border-transparent hover:text-blue-500">Despensa</button>
+                <button onclick="mudarAba('praia')" class="aba-btn px-3 py-1.5 rounded-lg border-b-2 border-transparent hover:text-blue-500">Clima & Praia</button>
+                <button onclick="mudarAba('automacoes')" class="aba-btn px-3 py-1.5 rounded-lg border-b-2 border-transparent hover:text-blue-500">Automações</button>
+                <button onclick="mudarAba('tuya')" class="aba-btn px-3 py-1.5 rounded-lg border-b-2 border-transparent hover:text-blue-500">Tuya</button>
+                <button onclick="mudarAba('historico')" class="aba-btn px-3 py-1.5 rounded-lg border-b-2 border-transparent hover:text-blue-500">Histórico</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- ABA: GERAL -->
+        <section id="aba-principal" class="aba-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Controle de Modos da Casa -->
+                <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                    <h2 class="text-lg font-semibold mb-4">Modo da Casa</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="alterarModo('Normal')" class="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white rounded-lg transition text-center font-medium">Normal</button>
+                        <button onclick="alterarModo('Nite')" class="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white rounded-lg transition text-center font-medium">Noite</button>
+                        <button onclick="alterarModo('Viagem')" class="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white rounded-lg transition text-center font-medium">Viagem</button>
+                        <button onclick="alterarModo('Festa')" class="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white rounded-lg transition text-center font-medium">Festa</button>
+                    </div>
+                </div>
+
+                <!-- Painel de Dispositivos Rápido -->
+                <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 md:col-span-2">
+                    <h2 class="text-lg font-semibold mb-4">Dispositivos Principais</h2>
+                    <div id="lista-dispositivos" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Carregado via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA: DESPENSA -->
+        <section id="aba-despensa" class="aba-content hidden space-y-6">
+            <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                    <h2 class="text-lg font-semibold">Gerenciamento de Despensa</h2>
+                    <button onclick="gerarReceitaIA()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition">
+                        ✨ Sugerir Receita com IA
+                    </button>
+                </div>
+
+                <!-- Formulário Adicionar Item -->
+                <form onsubmit="adicionarItemDespensa(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+                    <input type="text" id="desp-item" placeholder="Nome do item" required class="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                    <input type="number" step="0.1" id="desp-qtd" placeholder="Quantidade" required class="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                    <input type="text" id="desp-unidade" placeholder="Unidade (ex: kg, un)" required class="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg p-2 transition">Adicionar</button>
+                </form>
+
+                <div id="painel-receita-ia" class="hidden mb-6 p-4 bg-purple-950/30 border border-purple-800/50 rounded-lg text-purple-200 text-sm"></div>
+
+                <!-- Tabela de Itens -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-800 text-gray-500 text-sm">
+                                <th class="py-2">Item</th>
+                                <th class="py-2">Qtd.</th>
+                                <th class="py-2">Unidade</th>
+                                <th class="py-2 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-despensa" class="divide-y divide-gray-200 dark:divide-gray-800">
+                            <!-- Carregado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA: PRAIA E CLIMA -->
+        <section id="aba-praia" class="aba-content hidden space-y-6">
+            <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold">Previsão e Condições para Praia</h2>
+                    <select id="cidade-select" onchange="atualizarClima()" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-2 text-sm">
+                        <option value="Recife">Recife</option>
+                        <option value="Olinda">Olinda</option>
+                        <option value="Jaboatão dos Guararapes">Jaboatão</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                        <span class="text-xs text-gray-500 block">Temperatura</span>
+                        <span id="clima-temp" class="text-2xl font-bold">--°C</span>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                        <span class="text-xs text-gray-500 block">Sensação Térmica</span>
+                        <span id="clima-sensacao" class="text-2xl font-bold">--°C</span>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                        <span class="text-xs text-gray-500 block">Umidade</span>
+                        <span id="clima-umidade" class="text-2xl font-bold">--%</span>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                        <span class="text-xs text-gray-500 block">Vento</span>
+                        <span id="clima-vento" class="text-2xl font-bold">-- km/h</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
+                        <h3 class="font-semibold text-blue-500">Tábua de Marés</h3>
+                        <p class="text-sm">Próxima alta: <span id="mare-alta" class="font-medium">--</span></p>
+                        <p class="text-sm">Próxima baixa: <span id="mare-baixa" class="font-medium">--</span></p>
+                        <p class="text-sm">Janela ideal: <span id="mare-melhor-hora" class="font-medium">--</span></p>
+                        <p class="text-sm">Condição: <span id="mare-condicao" class="font-medium">--</span></p>
+                    </div>
+
+                    <div class="bg-blue-950/20 border border-blue-800/30 p-4 rounded-lg">
+                        <h3 class="font-semibold text-blue-400 mb-2">💡 Recomendação de IA</h3>
+                        <p id="sugestao-ia-praia" class="text-sm text-gray-300">Carregando sugestões personalizadas...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA: AUTOMAÇÕES -->
+        <section id="aba-automacoes" class="aba-content hidden space-y-6">
+            <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                <h2 class="text-lg font-semibold mb-4">Automações Ativas</h2>
+                <div id="lista-automacoes" class="space-y-3">
+                    <!-- Carregado via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA: TUYA -->
+        <section id="aba-tuya" class="aba-content hidden space-y-6">
+            <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                <h2 class="text-lg font-semibold mb-4">Dispositivos Tuya Integrados</h2>
+                <div id="lista-tuya" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Carregado via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA: HISTÓRICO -->
+        <section id="aba-historico" class="aba-content hidden space-y-6">
+            <div class="bg-white dark:bg-cardbg p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                <h2 class="text-lg font-semibold mb-4">Histórico de Eventos</h2>
+                <div class="overflow-x-auto">
+                    <ul id="lista-historico" class="divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                        <!-- Carregado via JS -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SCRIPT DA APLICAÇÃO -->
+    <script>
+        let ws;
+
+        // ----- GERENCIAMENTO DE WEBSOCKET -----
+        function conectarWS() {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                const el = document.getElementById("ws-status");
+                el.innerText = "Online";
+                el.className = "px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-500 font-medium";
+            };
+
+            ws.onclose = () => {
+                const el = document.getElementById("ws-status");
+                el.innerText = "Offline";
+                el.className = "px-2 py-0.5 text-xs rounded-full bg-red-500/20 text-red-500 font-medium";
+                setTimeout(conectarWS, 3000);
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.estado) renderizarDispositivos(data.estado.dispositivos);
+            };
+        }
+
+        // ----- NAVEGAÇÃO ENTRE ABAS -----
+        function mudarAba(aba) {
+            document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll(".aba-btn").forEach(el => {
+                el.classList.remove("border-blue-600", "dark:border-blue-400", "text-blue-600", "dark:text-blue-400");
+                el.classList.add("border-transparent");
+            });
+
+            const abaEl = document.getElementById(`aba-${aba}`);
+            if (abaEl) abaEl.classList.remove("hidden");
+
+            if (aba === "principal") carregarEstadoGeral();
+            if (aba === "despensa") carregarDespensa();
+            if (aba === "praia") atualizarClima();
+            if (aba === "automacoes") carregarAutomacoes();
+            if (aba === "tuya") carregarDispositivosTuya();
+            if (aba === "historico") carregarHistorico();
+        }
+
+        // ----- MÓDULO GERAL -----
+        async function carregarEstadoGeral() {
+            const res = await fetch("/api/estado");
+            const dados = await res.json();
+            renderizarDispositivos(dados.dispositivos);
+        }
+
+        function renderizarDispositivos(dispositivos) {
+            const container = document.getElementById("lista-dispositivos");
+            container.innerHTML = "";
+
+            for (const [key, disp] of Object.entries(dispositivos)) {
+                container.innerHTML += `
+                    <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+                        <div>
+                            <span class="font-medium block">${disp.nome}</span>
+                            <span class="text-xs ${disp.status ? 'text-green-500' : 'text-gray-500'}">${disp.status ? 'Ligado' : 'Desligado'}</span>
+                        </div>
+                        <button onclick="toggleDispositivo('${key}')" class="px-3 py-1.5 rounded-lg text-sm font-medium ${disp.status ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} transition">
+                            ${disp.status ? 'Desligar' : 'Ligar'}
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function toggleDispositivo(id) {
+            await fetch(`/api/dispositivo/${id}/toggle`, { method: "POST" });
+            carregarEstadoGeral();
+        }
+
+        async function alterarModo(modo) {
+            await fetch(`/api/modo?modo=${encodeURIComponent(modo)}`, { method: "POST" });
+        }
+
+        // ----- MÓDULO DESPENSA -----
+        async function carregarDespensa() {
+            const res = await fetch("/api/despensa");
+            const itens = await res.json();
+            const tbody = document.getElementById("tabela-despensa");
+            tbody.innerHTML = "";
+
+            itens.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="py-2.5">${item.item}</td>
+                        <td class="py-2.5">${item.quantidade}</td>
+                        <td class="py-2.5">${item.unidade}</td>
+                        <td class="py-2.5 text-right">
+                            <button onclick="removerDespensa(${item.id})" class="text-red-500 hover:underline text-sm">Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function adicionarItemDespensa(e) {
+            e.preventDefault();
+            const item = document.getElementById("desp-item").value;
+            const quantidade = document.getElementById("desp-qtd").value;
+            const unidade = document.getElementById("desp-unidade").value;
+
+            await fetch(`/api/despensa?item=${encodeURIComponent(item)}&quantidade=${quantidade}&unidade=${encodeURIComponent(unidade)}`, { method: "POST" });
+            e.target.reset();
+            carregarDespensa();
+        }
+
+        async function removerDespensa(id) {
+            await fetch(`/api/despensa/${id}`, { method: "DELETE" });
+            carregarDespensa();
+        }
+
+        async function gerarReceitaIA() {
+            const painel = document.getElementById("painel-receita-ia");
+            painel.classList.remove("hidden");
+            painel.innerText = "Processando receita com os itens disponíveis...";
+
+            const res = await fetch("/api/despensa/receitas", { method: "POST" });
+            const data = await res.json();
+            painel.innerText = data.receita;
+        }
+
+        // ----- MÓDULO PRAIA E CLIMA -----
+        async function atualizarClima() {
+            const cidadeSelect = document.getElementById("cidade-select");
+            const cidade = cidadeSelect ? cidadeSelect.value : "Recife";
+
+            try {
+                const response = await fetch(`/api/clima/atualizar/${encodeURIComponent(cidade)}`, { method: "POST" });
+                if (!response.ok) throw new Error(`Erro: ${response.status}`);
+                
+                const dados = await response.json();
+
+                document.getElementById("clima-temp").innerText = `${dados.clima.temperatura.toFixed(1)}°C`;
+                document.getElementById("clima-sensacao").innerText = `${dados.clima.sensacao.toFixed(1)}°C`;
+                document.getElementById("clima-umidade").innerText = `${dados.clima.umidade}%`;
+                document.getElementById("clima-vento").innerText = `${dados.clima.velocidade_vento.toFixed(0)} km/h`;
+
+                document.getElementById("mare-alta").innerText = dados.mare.proxima_alta;
+                document.getElementById("mare-baixa").innerText = dados.mare.proxima_baixa;
+                document.getElementById("mare-melhor-hora").innerText = dados.mare.melhor_hora;
+                document.getElementById("mare-condicao").innerText = dados.mare.condicao;
+
+                obterSugestaoIA(dados);
+            } catch (e) {
+                console.error("Erro ao atualizar clima:", e);
+            }
+        }
+
+        async function obterSugestaoIA(dadosClima) {
+            const res = await fetch("/api/ia/sugestao-praia", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dadosClima)
+            });
+            const data = await res.json();
+            document.getElementById("sugestao-ia-praia").innerText = data.sugestao;
+        }
+
+        // ----- MÓDULO AUTOMAÇÕES -----
+        async function carregarAutomacoes() {
+            const res = await fetch("/api/automacoes");
+            const autos = await res.json();
+            const container = document.getElementById("lista-automacoes");
+            container.innerHTML = "";
+
+            autos.forEach(a => {
+                container.innerHTML += `
+                    <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex justify-between items-center">
+                        <div>
+                            <span class="font-medium">${a.nome}</span>
+                            <p class="text-xs text-gray-500">Se ${a.gatilho} -> Entao ${a.acao}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs rounded bg-blue-500/20 text-blue-400 font-medium">Ativo</span>
+                    </div>
+                `;
+            });
+        }
+
+        // ----- MÓDULO TUYA -----
+        async function carregarDispositivosTuya() {
+            const res = await fetch("/api/tuya/dispositivos");
+            const disps = await res.json();
+            const container = document.getElementById("lista-tuya");
+            container.innerHTML = "";
+
+            disps.forEach(d => {
+                container.innerHTML += `
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex justify-between items-center">
+                        <span class="font-medium">${d.nome}</span>
+                        <span class="text-xs px-2 py-1 rounded ${d.status ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-500'}">
+                            ${d.status ? 'Ligado' : 'Desligado'}
+                        </span>
+                    </div>
+                `;
+            });
+        }
+
+        // ----- MÓDULO HISTÓRICO -----
+        async function carregarHistorico() {
+            const res = await fetch("/api/historico");
+            const logs = await res.json();
+            const ul = document.getElementById("lista-historico");
+            ul.innerHTML = "";
+
+            logs.forEach(log => {
+                ul.innerHTML += `
+                    <li class="py-2 flex justify-between">
+                        <span><strong>${log.evento}</strong>: ${log.detalhes || ''}</span>
+                        <span class="text-xs text-gray-500">${new Date(log.data_hora).toLocaleTimeString()}</span>
+                    </li>
+                `;
+            });
+        }
+
+        // Inicialização
+        window.onload = () => {
+            conectarWS();
+            carregarEstadoGeral();
+        };
+    </script>
+</body>
+</html>
