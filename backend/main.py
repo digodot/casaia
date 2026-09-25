@@ -191,7 +191,46 @@ def controlar_tomada(dados: ComandoTomada):
     
     except Exception as e:
         return {"status": "erro", "mensagem": str(e)}
+import requests
 
+@app.get("/api/clima")
+def obter_clima(cidade: str = "Recife"):
+    # Coordenadas de Recife (Pernambuco)
+    lat, lon = -8.05428, -34.8813
+    
+    # Se escolher outra cidade, pode ajustar as coordenadas aqui no futuro
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=America%2FRecife"
+    
+    try:
+        res = requests.get(url, timeout=5)
+        dados = res.json()["current"]
+        
+        # Mapeamento simples de códigos de tempo do Open-Meteo
+        codigos_tempo = {
+            0: "Céu limpo ☀️",
+            1: "Predominantemente limpo 🌤️",
+            2: "Parcialmente nublado ⛅",
+            3: "Nublado ☁️",
+            45: "Nevoeiro 🌫️",
+            61: "Chuva fraca 🌧️",
+            63: "Chuva moderada 🌧️",
+            80: "Pancadas de chuva 🌦️"
+        }
+        condicao = codigos_tempo.get(dados["weather_code"], "Ensolarado 🌤️")
+        
+        return {
+            "status": "sucesso",
+            "cidade": cidade,
+            "temperatura": dados["temperature_2m"],
+            "sensacao": dados["apparent_temperature"],
+            "humidade": dados["relative_humidity_2m"],
+            "vento": dados["wind_speed_10m"],
+            "condicao": condicao,
+            "mare_alta": "04:15 / 16:30", # Exemplo de dados de maré local
+            "mare_baixa": "10:20 / 22:45"
+        }
+    except Exception as e:
+        return {"status": "erro", "mensagem": str(e)}
 # -----------------------------------------------------------------------------
 # 3. INICIALIZAÇÃO DO SERVIDOR WEB
 # -----------------------------------------------------------------------------

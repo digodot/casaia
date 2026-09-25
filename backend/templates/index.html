@@ -1137,6 +1137,43 @@ async function controlarTomadaDireta(acao) {
     if (statusElem) statusElem.innerText = "Erro de conexão";
   }
 }
-    </script>
+
+
+    <script>
+async function carregarClima() {
+    try {
+        const res = await fetch('/api/clima?cidade=Recife');
+        const dados = await res.json();
+        
+        if (dados.status === 'sucesso') {
+            const tempElem = document.getElementById('temp-val');
+            if (tempElem) tempElem.innerText = `${dados.temperatura}°C`;
+
+            const sensElem = document.getElementById('sensacao-val');
+            if (sensElem) sensElem.innerText = `${dados.sensacao}°C`;
+
+            const umidElem = document.getElementById('umidade-val');
+            if (umidElem) umidElem.innerText = `${dados.humidade}%`;
+
+            const ventoElem = document.getElementById('vento-val');
+            if (ventoElem) ventoElem.innerText = `${dados.vento} km/h`;
+
+            const condElem = document.getElementById('condicao-val');
+            if (condElem) condElem.innerText = dados.condicao;
+
+            const mareAltaElem = document.getElementById('mare-alta-val');
+            if (mareAltaElem) mareAltaElem.innerText = dados.mare_alta;
+
+            const mareBaixaElem = document.getElementById('mare-baixa-val');
+            if (mareBaixaElem) mareBaixaElem.innerText = dados.mare_baixa;
+        }
+    } catch (err) {
+        console.error("Erro ao carregar dados de clima:", err);
+    }
+}
+
+// Carrega automaticamente ao abrir a página
+window.addEventListener('DOMContentLoaded', carregarClima);
+</script>
 </body>
 </html>
