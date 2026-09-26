@@ -62,9 +62,9 @@ def dar_bom_dia():
                 "para o dono da casa inteligente CasaIA. Máximo 2 frases."
             )
             resposta = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=prompt
-            )
+    model='gemini-2.5-flash',
+    contents=prompt
+)
             mensagem = resposta.text
         except Exception as e:
             print(f"[ERRO GEMINI VOZ] {e}")
@@ -169,9 +169,9 @@ def perguntar_ia(payload: PerguntaIA):
         historico_chat.append({"role": "user", "parts": [{"text": payload.pergunta}]})
         
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=historico_chat
-        )
+    model='gemini-2.5-flash',
+    contents=historico_chat
+)
         
         texto_resposta = response.text
         historico_chat.append({"role": "model", "parts": [{"text": texto_resposta}]})
@@ -257,10 +257,10 @@ def sugestao_praia():
     if api_key:
         try:
             client = genai.Client(api_key=api_key)
-            resposta = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents="Dê uma dica muito curta (2 frases) sobre ir à praia hoje no Nordeste considerando sol e maré."
-            )
+            response = client.models.generate_content(
+    model='gemini-2.5-flash',
+    contents=historico_chat
+)
             return {"sugestao": resposta.text, "melhor_hora": "07:30 - 10:30"}
         except Exception as e:
             print(f"[ERRO GEMINI PRAIA] {e}")
