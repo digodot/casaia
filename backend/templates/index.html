@@ -668,6 +668,35 @@
         document.addEventListener("DOMContentLoaded", () => {
             inicializarTema();
         });
+        async function enviarPerguntaIA(textoCustomizado = null) {
+    const input = document.getElementById("input-ia");
+    const pergunta = textoCustomizado || input.value.trim();
+    if (!pergunta) return;
+    
+    adicionarMensagemChat(pergunta, "usuario");
+    if (!textoCustomizado) input.value = "";
+    
+    try {
+        const res = await fetch("/api/ia/pergunta", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pergunta })
+        });
+        const dados = await res.json();
+        adicionarMensagemChat(dados.resposta, "ia");
+
+        // Síntese de voz nativa no navegador do telemóvel/PC
+        if (dados.resposta && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Para áudios anteriores
+            const utterance = new SpeechSynthesisUtterance(dados.resposta);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    } catch (e) {
+        adicionarMensagemChat("Erro ao conectar com a IA", "erro");
+    }
+}
     </script>
 </body>
 </html>

@@ -164,37 +164,42 @@ def perguntar_ia(payload: PerguntaIA):
     if not api_key:
         return {"resposta": f"Recebi a pergunta: '{payload.pergunta}'. (Configure GEMINI_API_KEY no .env!)"}
     
-    try:
-        client = genai.Client(api_key=api_key)
-        
-        # Atualizado para o modelo solicitado pela API
-        response = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=payload.pergunta
-        )
-        
-        texto_resposta = response.text
+    client = genai.Client(api_key=api_key)
+    texto_resposta = None
 
-        # Sintetiza e toca a resposta por voz no alto-falante do Raspberry Pi
+    # Tenta primeiro com o gemini-2.0-flash; se falhar (ex: erro 503), tenta o gemini-1.5-flash
+    for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
         try:
-            tts = gTTS(text=texto_resposta, lang='pt', slow=False)
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-                caminho_audio = fp.name
-                tts.save(caminho_audio)
+            response = client.models.generate_content(
+                model=modelo,
+                contents=payload.pergunta
+            )
+            texto_resposta = response.text
+            if texto_resposta:
+                break
+        except Exception as e:
+            print(f"[Aviso Gemini - {modelo}] {e}")
 
-            subprocess.run(["mpg123", "-q", caminho_audio], check=True)
+    if not texto_resposta:
+        return {"resposta": "Os servidores do Gemini estão temporariamente sobrecarregados. Por favor, tente novamente em alguns instantes."}
 
-            try:
-                os.remove(caminho_audio)
-            except Exception:
-                pass
-        except Exception as err_audio:
-            print(f"[ERRO AUDIO IA] {err_audio}")
+    # Sintetiza e reproduz o áudio nas colunas do Raspberry Pi
+    try:
+        tts = gTTS(text=texto_resposta, lang='pt', slow=False)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            caminho_audio = fp.name
+            tts.save(caminho_audio)
 
-        return {"resposta": texto_resposta}
-    except Exception as e:
-        print(f"[ERRO GEMINI DETALHADO] {type(e).__name__}: {e}")
-        return {"resposta": f"Desculpe, ocorreu um erro ao processar a conversa: {e}"}
+        subprocess.run(["mpg123", "-q", caminho_audio], check=True)
+
+        try:
+            os.remove(caminho_audio)
+        except Exception:
+            pass
+    except Exception as err_audio:
+        print(f"[ERRO AUDIO IA] {err_audio}")
+
+    return {"resposta": texto_resposta}
     
 @app.post("/api/ia/limpar")
 def limpar_historico():
