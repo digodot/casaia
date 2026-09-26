@@ -62,9 +62,9 @@ def dar_bom_dia():
                 "para o dono da casa inteligente CasaIA. Máximo 2 frases."
             )
             resposta = client.models.generate_content(
-    model='gemini-2.5-flash',
-    contents=prompt
-)
+                model='gemini-2.0-flash',
+                contents=prompt
+            )
             mensagem = resposta.text
         except Exception as e:
             print(f"[ERRO GEMINI VOZ] {e}")
@@ -77,7 +77,7 @@ def dar_bom_dia():
             caminho_audio = fp.name
             tts.save(caminho_audio)
 
-        # Reproduz o áudio via mpg123 no Linux (sem engasgos)
+        # Reproduz o áudio via mpg123 no Linux
         try:
             subprocess.run(["mpg123", "-q", caminho_audio], check=True)
         except Exception as e:
@@ -166,15 +166,14 @@ def perguntar_ia(payload: PerguntaIA):
     
     try:
         client = genai.Client(api_key=api_key)
-        historico_chat.append({"role": "user", "parts": [{"text": payload.pergunta}]})
         
+        # Envia a pergunta diretamente para o Gemini 2.0 Flash
         response = client.models.generate_content(
-    model='gemini-2.5-flash',
-    contents=historico_chat
-)
+            model='gemini-2.0-flash',
+            contents=payload.pergunta
+        )
         
         texto_resposta = response.text
-        historico_chat.append({"role": "model", "parts": [{"text": texto_resposta}]})
 
         # Sintetiza e toca a resposta por voz no alto-falante do Raspberry Pi
         try:
@@ -194,8 +193,8 @@ def perguntar_ia(payload: PerguntaIA):
 
         return {"resposta": texto_resposta}
     except Exception as e:
-        print(f"[ERRO GEMINI] {e}")
-        return {"resposta": "Desculpe, ocorreu um erro ao processar a conversa."}
+        print(f"[ERRO GEMINI DETALHADO] {type(e).__name__}: {e}")
+        return {"resposta": f"Desculpe, ocorreu um erro ao processar a conversa: {e}"}
     
 @app.post("/api/ia/limpar")
 def limpar_historico():
@@ -257,11 +256,12 @@ def sugestao_praia():
     if api_key:
         try:
             client = genai.Client(api_key=api_key)
+            prompt = "Dê uma sugestão muito curta (máximo 2 frases) de aproveitamento de praia no Nordeste hoje considerando sol e banho de mar."
             response = client.models.generate_content(
-    model='gemini-2.5-flash',
-    contents=historico_chat
-)
-            return {"sugestao": resposta.text, "melhor_hora": "07:30 - 10:30"}
+                model='gemini-2.0-flash',
+                contents=prompt
+            )
+            return {"sugestao": response.text, "melhor_hora": "07:30 - 10:30"}
         except Exception as e:
             print(f"[ERRO GEMINI PRAIA] {e}")
             
