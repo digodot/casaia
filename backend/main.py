@@ -102,7 +102,7 @@ def dar_bom_dia():
         try:
             client = genai.Client(api_key=api_key)
             prompt = "Escreva uma saudação de bom dia muito curta e motivadora para a casa inteligente CasaIA. Máximo 2 frases."
-            for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
+            for modelo in ['gemini-3.6-flash', 'gemini-1.5-flash']:
                 try:
                     res = client.models.generate_content(model=modelo, contents=prompt)
                     if res.text:
@@ -172,7 +172,7 @@ def perguntar_ia(payload: PerguntaIA):
     
     if not texto_resposta:
         # Tenta os modelos com fallback automático contra erro 503/404
-        for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
+        for modelo in ['gemini-3.6-flash', 'gemini-1.5-flash']:
             try:
                 response = client.models.generate_content(
                     model=modelo,
@@ -267,7 +267,7 @@ def sugestao_praia():
         try:
             client = genai.Client(api_key=api_key)
             prompt = "Dê uma sugestão muito curta (máximo 2 frases) para aproveitar a praia no Nordeste hoje."
-            for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
+            for modelo in ['gemini-3.6-flash', 'gemini-1.5-flash']:
                 try:
                     response = client.models.generate_content(model=modelo, contents=prompt)
                     if response.text:
