@@ -164,48 +164,57 @@ def perguntar_ia(payload: PerguntaIA):
     if not api_key:
         return {"resposta": f"Recebi a pergunta: '{payload.pergunta}'. (Configure GEMINI_API_KEY no .env!)"}
     
-    client = genai.Client(api_key=api_key)
-    texto_resposta = None
-
-    # Tenta primeiro com o gemini-2.0-flash; se falhar (ex: erro 503), tenta o gemini-1.5-flash
-    for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
-        try:
-            response = client.models.generate_content(
-                model=modelo,
-                contents=payload.pergunta
-            )
-            texto_resposta = response.text
-            if texto_resposta:
-                break
-        except Exception as e:
-            print(f"[Aviso Gemini - {modelo}] {e}")
-
-    if not texto_resposta:
-        return {"resposta": "Os servidores do Gemini estão temporariamente sobrecarregados. Por favor, tente novamente em alguns instantes."}
-
-    # Sintetiza e reproduz o áudio nas colunas do Raspberry Pi
     try:
-        tts = gTTS(text=texto_resposta, lang='pt', slow=False)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            caminho_audio = fp.name
-            tts.save(caminho_audio)
+        client = genai.Client(api_key=api_key)
+        
+        # Modelo atualizado conforme exigido pela API
+        response = client.models.generate_content(
+            model='gemini-3.8-flash',
+            contents=payload.pergunta
+        )
+        
+        texto_resposta = response.text
 
-        subprocess.run(["mpg123", "-q", caminho_audio], check=True)
-
+        # Áudio nas colunas do Raspberry Pi (se mpg123 estiver disponível)
         try:
-            os.remove(caminho_audio)
-        except Exception:
-            pass
-    except Exception as err_audio:
-        print(f"[ERRO AUDIO IA] {err_audio}")
+            tts = gTTS(text=texto_resposta, lang='pt', slow=False)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+                caminho_audio = fp.name
+                tts.save(caminho_audio)
 
-    return {"resposta": texto_resposta}
-    
-@app.post("/api/ia/limpar")
-def limpar_historico():
-    global historico_chat
-    historico_chat = []
-    return {"status": "sucesso", "mensagem": "Histórico de conversa limpo!"}
+            subprocess.run(["mpg123", "-q", caminho_audio], check=True)
+
+            try:
+                os.remove(caminho_audio)
+            except Exception:
+                pass
+        except Exception as err_audio:
+            pass
+
+        return {"resposta": texto_resposta}
+    except Exception as e:
+        print(f"[ERRO GEMINI] {e}")
+        return {"resposta": f"Erro na IA: {e}"}
+
+@app.get("/api/praia/sugestao")
+def sugestao_praia():
+    api_key = os.getenv("GEMINI_API_KEY")
+    if api_key:
+        try:
+            client = genai.Client(api_key=api_key)
+            prompt = "Dê uma sugestão muito curta (máximo 2 frases) para aproveitar a praia no Nordeste hoje."
+            response = client.models.generate_content(
+                model='gemini-3.8-flash',
+                contents=prompt
+            )
+            return {"sugestao": response.text, "melhor_hora": "07:30 - 10:30"}
+        except Exception as e:
+            print(f"[ERRO GEMINI PRAIA] {e}")
+            
+    return {
+        "sugestao": "O dia está ótimo para aproveitar a praia! Lembre-se de usar protetor solar e se hidratar.",
+        "melhor_hora": "08:00 - 11:00"
+    }
 
 # -----------------------------------------------------------------------------
 # 6. CLIMA, MARÉ E SUGESTÕES DE PRAIA
