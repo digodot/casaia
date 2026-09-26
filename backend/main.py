@@ -5,7 +5,7 @@ import serial
 import requests
 import uvicorn
 import tinytuya
-import pygame
+import subprocess
 from gtts import gTTS
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
@@ -71,18 +71,13 @@ def dar_bom_dia():
             mensagem = "Bom dia! Tenha um excelente dia."
 
     try:
+        # Gera o ficheiro de áudio MP3 temporário
         tts = gTTS(text=mensagem, lang='pt', slow=False)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             caminho_audio = fp.name
             tts.save(caminho_audio)
 
-        try:
-        tts = gTTS(text=mensagem, lang='pt', slow=False)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            caminho_audio = fp.name
-            tts.save(caminho_audio)
-
-        # Toca o áudio de forma nativa e sem engasgos usando o mpg123
+        # Reproduz o áudio via mpg123 no Linux (sem engasgos)
         try:
             subprocess.run(["mpg123", "-q", caminho_audio], check=True)
         except Exception as e:
@@ -98,34 +93,13 @@ def dar_bom_dia():
     except Exception as e:
         print(f"[ERRO AUDIO] {e}")
         return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
-except:
-    pass
-
-pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=4096)
-pygame.mixer.init()
-
-        while pygame.mixer.music.get_busy():
-            time.sleep(0.1)
-
-        pygame.mixer.music.unload()
-        pygame.mixer.quit()
-
-        try:
-            os.remove(caminho_audio)
-        except Exception:
-            pass
-
-        return {"status": "sucesso", "mensagem_falada": mensagem}
-    except Exception as e:
-        print(f"[ERRO AUDIO] {e}")
-        return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
 
 # -----------------------------------------------------------------------------
 # 4. HARDWARE E HARDWARE IOT (ARDUINO & TOMADAS)
 # -----------------------------------------------------------------------------
 @app.post("/api/alimentar")
 def alimentar_gato():
-    porta_com = '/dev/ttyUSB0'  # No Raspberry Pi costuma ser /dev/ttyACM0 ou /dev/ttyUSB0
+    porta_com = '/dev/ttyUSB0'  # No Raspberry Pi
     try:
         with serial.Serial(porta_com, 9600, timeout=1) as arduino:
             time.sleep(2.5)
@@ -212,7 +186,7 @@ def limpar_historico():
     return {"status": "sucesso", "mensagem": "Histórico de conversa limpo!"}
 
 # -----------------------------------------------------------------------------
-# 6. CLIMA, MARÉ E SUGGESTÕES DE PRAIA
+# 6. CLIMA, MARÉ E SUGESTÕES DE PRAIA
 # -----------------------------------------------------------------------------
 @app.get("/api/clima")
 @app.post("/api/clima/atualizar/{cidade}")
