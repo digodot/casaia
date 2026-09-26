@@ -167,9 +167,9 @@ def perguntar_ia(payload: PerguntaIA):
     try:
         client = genai.Client(api_key=api_key)
         
-        # Envia a pergunta diretamente para o Gemini 2.0 Flash
+        # Atualizado para o modelo solicitado pela API
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3.8-flash',
             contents=payload.pergunta
         )
         
