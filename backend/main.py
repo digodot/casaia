@@ -19,9 +19,13 @@ load_dotenv(caminho_env)
 
 app = FastAPI(title="CasaIA - Central de Automação")
 
-# -----------------------------------------------------------------------------
+# Estados globais
+estado_tomadas = {}
+historico_chat = []
+
+# =============================================================================
 # 1. MODELOS DE DADOS
-# -----------------------------------------------------------------------------
+# =============================================================================
 class PerguntaIA(BaseModel):
     pergunta: str
 
@@ -31,12 +35,53 @@ class ComandoTomada(BaseModel):
     local_key: str
     acao: str  # "ligar", "desligar" ou "alternar"
 
-# Histórico global do Chat
-historico_chat = []
+# =============================================================================
+# 2. FERRAMENTAS E FUNÇÕES DO GEMINI (FUNCTION CALLING)
+# =============================================================================
+def alimentar_gato_funcao():
+    porta_com = '/dev/ttyUSB0'
+    try:
+        with serial.Serial(porta_com, 9600, timeout=1) as arduino:
+            time.sleep(2.5)
+            arduino.reset_input_buffer()
+            arduino.reset_output_buffer()
+            arduino.write(b'G')
+            time.sleep(0.5)
+            return {"sucesso": True, "mensagem": "Ração servida com sucesso! 🐱"}
+    except Exception as e:
+        return {"sucesso": False, "mensagem": f"Erro no Arduino: {e}"}
 
-# -----------------------------------------------------------------------------
-# 2. ROTAS PRINCIPAIS E DASHBOARD
-# -----------------------------------------------------------------------------
+def controlar_tomada_funcao(device_id: str, ip: str, local_key: str, acao: str):
+    try:
+        device = tinytuya.OutletDevice(
+            dev_id=device_id,
+            address=ip,
+            local_key=local_key,
+            version=3.3
+        )
+        if acao == "ligar":
+            device.turn_on()
+            status = "ligada"
+        elif acao == "desligar":
+            device.turn_off()
+            status = "desligada"
+        else:
+            estado_atual = device.status().get('dps', {}).get('1', False)
+            if estado_atual:
+                device.turn_off()
+                status = "desligada"
+            else:
+                device.turn_on()
+                status = "ligada"
+        
+        estado_tomadas[device_id] = status
+        return {"sucesso": True, "mensagem": f"Tomada {status} com sucesso! ⚡"}
+    except Exception as e:
+        return {"sucesso": False, "mensagem": f"Erro ao controlar tomada: {e}"}
+
+# =============================================================================
+# 3. ROTAS PRINCIPAIS E DASHBOARD
+# =============================================================================
 @app.get("/", response_class=HTMLResponse)
 def ler_index():
     caminho_index = os.path.join(os.path.dirname(__file__), "templates", "index.html")
@@ -45,45 +90,40 @@ def ler_index():
             return f.read()
     return "<h1>Erro: Ficheiro index.html não encontrado na pasta templates!</h1>"
 
-# -----------------------------------------------------------------------------
-# 3. SÍNTESE DE VOZ E AUTOMAÇÃO
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 4. SÍNTESE DE VOZ E AUTOMAÇÃO
+# =============================================================================
 @app.post("/api/automacao/bom-dia")
 def dar_bom_dia():
     api_key = os.getenv("GEMINI_API_KEY")
+    mensagem = "Bom dia! Bem-vindo de volta à CasaIA."
     
-    if not api_key:
-        mensagem = "Bom dia! Bem-vindo de volta à CasaIA."
-    else:
+    if api_key:
         try:
             client = genai.Client(api_key=api_key)
-            prompt = (
-                "Escreva uma saudação de bom dia muito curta, motivadora e natural "
-                "para o dono da casa inteligente CasaIA. Máximo 2 frases."
-            )
-            resposta = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=prompt
-            )
-            mensagem = resposta.text
+            prompt = "Escreva uma saudação de bom dia muito curta e motivadora para a casa inteligente CasaIA. Máximo 2 frases."
+            for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
+                try:
+                    res = client.models.generate_content(model=modelo, contents=prompt)
+                    if res.text:
+                        mensagem = res.text
+                        break
+                except Exception:
+                    continue
         except Exception as e:
-            print(f"[ERRO GEMINI VOZ] {e}")
-            mensagem = "Bom dia! Tenha um excelente dia."
+            print(f"[ERRO GEMINI BOM DIA] {e}")
 
     try:
-        # Gera o ficheiro de áudio MP3 temporário
         tts = gTTS(text=mensagem, lang='pt', slow=False)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             caminho_audio = fp.name
             tts.save(caminho_audio)
 
-        # Reproduz o áudio via mpg123 no Linux
         try:
             subprocess.run(["mpg123", "-q", caminho_audio], check=True)
-        except Exception as e:
-            print(f"[ERRO MPG123] {e}")
+        except Exception:
+            pass
 
-        # Remove o ficheiro temporário
         try:
             os.remove(caminho_audio)
         except Exception:
@@ -91,134 +131,90 @@ def dar_bom_dia():
 
         return {"status": "sucesso", "mensagem_falada": mensagem}
     except Exception as e:
-        print(f"[ERRO AUDIO] {e}")
         return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
 
-# -----------------------------------------------------------------------------
-# 4. HARDWARE E HARDWARE IOT (ARDUINO & TOMADAS)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 5. HARDWARE E TOMADAS
+# =============================================================================
 @app.post("/api/alimentar")
 def alimentar_gato():
-    porta_com = '/dev/ttyUSB0'  # No Raspberry Pi
-    try:
-        with serial.Serial(porta_com, 9600, timeout=1) as arduino:
-            time.sleep(2.5)
-            arduino.reset_input_buffer()
-            arduino.reset_output_buffer()
-            arduino.write(b'G')
-            time.sleep(0.5)
-            return {"status": "sucesso", "mensagem": "Comando enviado! Ração servida com sucesso."}
-    except serial.SerialException as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Erro ao conectar ao Arduino. Erro: {e}"
-        )
+    resultado = alimentar_gato_funcao()
+    if resultado["sucesso"]:
+        return {"status": "sucesso", "mensagem": resultado["mensagem"]}
+    raise HTTPException(status_code=503, detail=resultado["mensagem"])
 
 @app.post("/api/tomada/controlar")
 def controlar_tomada(dados: ComandoTomada):
-    try:
-        device = tinytuya.OutletDevice(
-            dev_id=dados.device_id,
-            address=dados.ip,
-            local_key=dados.local_key,
-            version=3.3
-        )
-        
-        if dados.acao == "ligar":
-            device.turn_on()
-            status = "ligada"
-        elif dados.acao == "desligar":
-            device.turn_off()
-            status = "desligada"
-        elif dados.acao == "alternar":
-            estado_atual = device.status().get('dps', {}).get('1', False)
-            if estado_atual:
-                device.turn_off()
-                status = "desligada"
-            else:
-                device.turn_on()
-                status = "ligada"
-        else:
-            raise HTTPException(status_code=400, detail="Ação inválida")
-
-        return {"status": "sucesso", "estado": status}
-    except Exception as e:
-        return {"status": "erro", "mensagem": str(e)}
+    return controlar_tomada_funcao(dados.device_id, dados.ip, dados.local_key, dados.acao)
 
 @app.get("/api/webhook/tomada/{acao}")
 def webhook_tomada(acao: str):
-    dados = ComandoTomada(
-        device_id="SEU_DEVICE_ID",
-        ip="192.168.10.X",
-        local_key="SUA_LOCAL_KEY",
-        acao=acao
-    )
+    dados = ComandoTomada(device_id="SEU_DEVICE_ID", ip="192.168.10.X", local_key="SUA_LOCAL_KEY", acao=acao)
     return controlar_tomada(dados)
 
-# -----------------------------------------------------------------------------
-# 5. CHAT COM IA (GEMINI)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 6. CHAT COM IA (GEMINI COM RESILIÊNCIA E VOZ)
+# =============================================================================
 @app.post("/api/ia/pergunta")
 def perguntar_ia(payload: PerguntaIA):
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        return {"resposta": f"Recebi a pergunta: '{payload.pergunta}'. (Configure GEMINI_API_KEY no .env!)"}
+        return {"resposta": f"Recebi: '{payload.pergunta}'. (Configure GEMINI_API_KEY no .env!)"}
     
-    try:
-        client = genai.Client(api_key=api_key)
-        
-        # Modelo atualizado conforme exigido pela API
-        response = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=payload.pergunta
-        )
-        
-        texto_resposta = response.text
+    texto_resposta = None
+    client = genai.Client(api_key=api_key)
 
-        # Áudio nas colunas do Raspberry Pi (se mpg123 estiver disponível)
-        try:
-            tts = gTTS(text=texto_resposta, lang='pt', slow=False)
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-                caminho_audio = fp.name
-                tts.save(caminho_audio)
-
-            subprocess.run(["mpg123", "-q", caminho_audio], check=True)
-
+    # Execução de comandos diretos via comando de voz/texto
+    pergunta_lower = payload.pergunta.lower()
+    if "alimentar" in pergunta_lower or "gato" in pergunta_lower or "ração" in pergunta_lower:
+        res_alim = alimentar_gato_funcao()
+        texto_resposta = res_alim["mensagem"]
+    
+    if not texto_resposta:
+        # Tenta os modelos com fallback automático contra erro 503/404
+        for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
             try:
-                os.remove(caminho_audio)
-            except Exception:
-                pass
-        except Exception as err_audio:
-            pass
+                response = client.models.generate_content(
+                    model=modelo,
+                    contents=payload.pergunta
+                )
+                if response.text:
+                    texto_resposta = response.text
+                    break
+            except Exception as e:
+                print(f"[AVISO GEMINI - {modelo}] {type(e).__name__}: {e}")
 
-        return {"resposta": texto_resposta}
-    except Exception as e:
-        print(f"[ERRO GEMINI] {e}")
-        return {"resposta": f"Erro na IA: {e}"}
+    if not texto_resposta:
+        texto_resposta = "Os servidores do Gemini estão temporariamente sobrecarregados. Por favor, tente novamente em alguns instantes."
 
-@app.get("/api/praia/sugestao")
-def sugestao_praia():
-    api_key = os.getenv("GEMINI_API_KEY")
-    if api_key:
+    # Toca a resposta no alto-falante do Pi (se mpg123 estiver disponível)
+    try:
+        tts = gTTS(text=texto_resposta[:300], lang='pt', slow=False)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            caminho_audio = fp.name
+            tts.save(caminho_audio)
         try:
-            client = genai.Client(api_key=api_key)
-            prompt = "Dê uma sugestão muito curta (máximo 2 frases) para aproveitar a praia no Nordeste hoje."
-            response = client.models.generate_content(
-                model='gemini-3.8-flash',
-                contents=prompt
-            )
-            return {"sugestao": response.text, "melhor_hora": "07:30 - 10:30"}
-        except Exception as e:
-            print(f"[ERRO GEMINI PRAIA] {e}")
-            
-    return {
-        "sugestao": "O dia está ótimo para aproveitar a praia! Lembre-se de usar protetor solar e se hidratar.",
-        "melhor_hora": "08:00 - 11:00"
-    }
+            subprocess.run(["mpg123", "-q", caminho_audio], check=True)
+        except Exception:
+            pass
+        try:
+            os.remove(caminho_audio)
+        except Exception:
+            pass
+    except Exception:
+        pass
 
-# -----------------------------------------------------------------------------
-# 6. CLIMA, MARÉ E SUGESTÕES DE PRAIA
-# -----------------------------------------------------------------------------
+    return {"resposta": texto_resposta}
+
+@app.post("/api/ia/limpar")
+def limpar_historico():
+    global historico_chat
+    historico_chat = []
+    return {"status": "sucesso", "mensagem": "Histórico de conversa limpo!"}
+
+# =============================================================================
+# 7. CLIMA, MARÉ E SUGESTÕES DE PRAIA
+# =============================================================================
 @app.get("/api/clima")
 @app.post("/api/clima/atualizar/{cidade}")
 def atualizar_clima_cidade(cidade: str = "Recife"):
@@ -270,12 +266,14 @@ def sugestao_praia():
     if api_key:
         try:
             client = genai.Client(api_key=api_key)
-            prompt = "Dê uma sugestão muito curta (máximo 2 frases) de aproveitamento de praia no Nordeste hoje considerando sol e banho de mar."
-            response = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=prompt
-            )
-            return {"sugestao": response.text, "melhor_hora": "07:30 - 10:30"}
+            prompt = "Dê uma sugestão muito curta (máximo 2 frases) para aproveitar a praia no Nordeste hoje."
+            for modelo in ['gemini-2.0-flash', 'gemini-1.5-flash']:
+                try:
+                    response = client.models.generate_content(model=modelo, contents=prompt)
+                    if response.text:
+                        return {"sugestao": response.text, "melhor_hora": "07:30 - 10:30"}
+                except Exception:
+                    continue
         except Exception as e:
             print(f"[ERRO GEMINI PRAIA] {e}")
             
@@ -284,15 +282,15 @@ def sugestao_praia():
         "melhor_hora": "08:00 - 11:00"
     }
 
-# -----------------------------------------------------------------------------
-# 7. DESPENSA E OUTRAS CONSULTAS
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 8. DESPENSA E OUTRAS CONSULTAS
+# =============================================================================
 @app.get("/api/despensa")
 def obter_despensa():
     return []
 
-# -----------------------------------------------------------------------------
-# 8. INICIALIZAÇÃO DO SERVIDOR WEB (SEMPRE NO FIM!)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 9. INICIALIZAÇÃO DO SERVIDOR WEB
+# =============================================================================
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
