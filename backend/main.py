@@ -76,13 +76,33 @@ def dar_bom_dia():
             caminho_audio = fp.name
             tts.save(caminho_audio)
 
-        if pygame.mixer.get_init():
-            pygame.mixer.music.stop()
-            pygame.mixer.quit()
+        try:
+        tts = gTTS(text=mensagem, lang='pt', slow=False)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            caminho_audio = fp.name
+            tts.save(caminho_audio)
 
-        pygame.mixer.init()
-        pygame.mixer.music.load(caminho_audio)
-        pygame.mixer.music.play()
+        # Toca o áudio de forma nativa e sem engasgos usando o mpg123
+        try:
+            subprocess.run(["mpg123", "-q", caminho_audio], check=True)
+        except Exception as e:
+            print(f"[ERRO MPG123] {e}")
+
+        # Remove o ficheiro temporário
+        try:
+            os.remove(caminho_audio)
+        except Exception:
+            pass
+
+        return {"status": "sucesso", "mensagem_falada": mensagem}
+    except Exception as e:
+        print(f"[ERRO AUDIO] {e}")
+        return {"status": "erro", "mensagem": f"Erro ao reproduzir áudio: {e}"}
+except:
+    pass
+
+pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=4096)
+pygame.mixer.init()
 
         while pygame.mixer.music.get_busy():
             time.sleep(0.1)
