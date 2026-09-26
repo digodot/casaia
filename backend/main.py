@@ -173,12 +173,30 @@ def perguntar_ia(payload: PerguntaIA):
             contents=historico_chat
         )
         
-        historico_chat.append({"role": "model", "parts": [{"text": response.text}]})
-        return {"resposta": response.text}
+        texto_resposta = response.text
+        historico_chat.append({"role": "model", "parts": [{"text": texto_resposta}]})
+
+        # Sintetiza e toca a resposta por voz no alto-falante do Raspberry Pi
+        try:
+            tts = gTTS(text=texto_resposta, lang='pt', slow=False)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+                caminho_audio = fp.name
+                tts.save(caminho_audio)
+
+            subprocess.run(["mpg123", "-q", caminho_audio], check=True)
+
+            try:
+                os.remove(caminho_audio)
+            except Exception:
+                pass
+        except Exception as err_audio:
+            print(f"[ERRO AUDIO IA] {err_audio}")
+
+        return {"resposta": texto_resposta}
     except Exception as e:
         print(f"[ERRO GEMINI] {e}")
         return {"resposta": "Desculpe, ocorreu um erro ao processar a conversa."}
-
+    
 @app.post("/api/ia/limpar")
 def limpar_historico():
     global historico_chat

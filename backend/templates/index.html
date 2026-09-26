@@ -50,16 +50,6 @@
         .dark { color-scheme: dark; }
         .light { color-scheme: light; }
         
-        .neon-border {
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            position: relative;
-        }
-        
-        .neon-blue {
-            border-image: linear-gradient(135deg, #3b82f6, #1e40af) 1;
-        }
-        
         .modal-overlay {
             animation: fadeIn 0.2s ease-out;
         }
@@ -99,38 +89,22 @@
             <!-- Modo da Casa + Estado Rápido -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 
-                <!-- Modo Casa -->
-                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-                    <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4">MODO DA CASA</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="alterarModo('Normal')" class="py-2 px-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:bg-blue-100 dark:hover:bg-blue-800/50 transition">Normal</button>
-                        <button onclick="alterarModo('Noite')" class="py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold text-sm hover:bg-gray-100 transition">Noite</button>
-                        <button onclick="alterarModo('Ausência')" class="py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold text-sm hover:bg-gray-100 transition">Ausência</button>
-                        <button onclick="alterarModo('Festa')" class="py-2 px-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-100 transition">Festa</button>
+                <!-- Modo Casa & Voz -->
+                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 flex flex-col justify-between space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4">MODO DA CASA</h3>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button onclick="alterarModo('Normal')" class="py-2 px-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:bg-blue-100 dark:hover:bg-blue-800/50 transition">Normal</button>
+                            <button onclick="alterarModo('Noite')" class="py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold text-sm hover:bg-gray-100 transition">Noite</button>
+                            <button onclick="alterarModo('Ausência')" class="py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold text-sm hover:bg-gray-100 transition">Ausência</button>
+                            <button onclick="alterarModo('Festa')" class="py-2 px-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-100 transition">Festa</button>
+                        </div>
                     </div>
+                    <button onclick="dispararBomDia()" class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold text-sm transition active:scale-95 shadow">
+                        ☀️ Tocar Bom Dia (Voz)
+                    </button>
                 </div>
-<!-- Botão no HTML -->
-<button 
-  onclick="dispararBomDia()" 
-  class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold text-sm transition active:scale-95 shadow">
-  ☀️ Tocar Bom Dia (Voz)
-</button>
 
-<script>
-async function dispararBomDia() {
-  try {
-    const res = await fetch('/api/automacao/bom-dia', { method: 'POST' });
-    const dados = await res.json();
-    if (dados.status === 'sucesso') {
-      alert("CasaIA falou: " + dados.mensagem_falada);
-    } else {
-      alert("Erro ao tocar áudio.");
-    }
-  } catch (err) {
-    console.error("Erro na requisição:", err);
-  }
-}
-</script>
                 <!-- Telemetria -->
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
                     <h3 class="text-xs font-bold opacity-80 mb-2">🌡️ AMBIENTE</h3>
@@ -167,7 +141,7 @@ async function dispararBomDia() {
             <!-- Grid de Conteúdo -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <!-- Chat com IA (grande) -->
+                <!-- Chat com IA -->
                 <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col" style="height: 600px;">
                     
                     <div class="border-b border-gray-200 dark:border-gray-800 p-4">
@@ -175,12 +149,12 @@ async function dispararBomDia() {
                             <span class="text-2xl">🤖</span>
                             <div>
                                 <h2 class="font-bold text-gray-900 dark:text-white">Assistente IA</h2>
-                                <p class="text-xs text-gray-500">Powered by Groq</p>
+                                <p class="text-xs text-gray-500">Powered by Gemini 2.0 Flash</p>
                             </div>
                         </div>
                     </div>
 
-                    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3" style="max-height: 400px;">
+                    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3">
                         <div class="chat-message flex gap-3">
                             <span class="text-xl">🤖</span>
                             <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 max-w-xs">
@@ -194,6 +168,12 @@ async function dispararBomDia() {
                             <input type="text" id="input-ia" placeholder="Faça uma pergunta à IA..." 
                                    class="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                    onkeypress="if(event.key==='Enter') enviarPerguntaIA()">
+                            
+                            <!-- Botão de Reconhecimento de Voz -->
+                            <button id="btn-voz" onclick="ouvirVozEPerguntar()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all flex items-center gap-1">
+                                🎙️ <span class="hidden sm:inline">Voz</span>
+                            </button>
+
                             <button onclick="enviarPerguntaIA()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all">
                                 Enviar
                             </button>
@@ -223,51 +203,30 @@ async function dispararBomDia() {
                                 ❄️ AC
                             </button>
                         </div>
+                        <button onclick="alimentarGato()" class="w-full mt-3 py-3 bg-purple-200 hover:bg-purple-300 dark:bg-purple-900/40 dark:hover:bg-purple-800/60 text-purple-900 dark:text-purple-200 font-bold rounded-lg transition">
+                            🐱 Alimentar Gato
+                        </button>
                     </div>
-<!-- Botão do Alimentador do Gato -->
-<button onclick="alimentarGato()" style="width: 100%; padding: 12px; margin-top: 8px; background-color: #cba6f7; color: #11111b; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">
-  🐱 Alimentar Gato
-</button>
-<!-- Card da Tomada Inteligente Smart Life -->
-<div class="mt-4 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
-  <div class="flex justify-between items-center mb-3">
-    <h3 class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-      ⚡ Tomada Inteligente
-    </h3>
-    <span id="status-tomada-direta" class="text-xs font-semibold text-amber-500">Pronto</span>
-  </div>
-  
-  <div class="grid grid-cols-2 gap-2">
-    <button 
-      onclick="controlarTomadaDireta('ligar')" 
-      class="py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold text-sm transition active:scale-95">
-      🟢 Ligar
-    </button>
-    <button 
-      onclick="controlarTomadaDireta('desligar')" 
-      class="py-2 px-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-semibold text-sm transition active:scale-95">
-      🔴 Desligar
-    </button>
-  </div>
-</div>
-<script>
-  function alimentarGato() {
-    fetch('/api/alimentar', { method: 'POST' })
-      .then(async response => {
-        const data = await response.json();
-        if (!response.ok) {
-          // Exibe a mensagem de erro detalhada retornada pela API
-          alert(data.detail || "Erro no servidor ao tentar acionar a porta COM.");
-        } else {
-          alert(data.mensagem);
-        }
-      })
-      .catch(error => {
-        alert("Erro de conexão com o servidor FastAPI.");
-        console.error('Erro:', error);
-      });
-  }
-</script>
+
+                    <!-- Card da Tomada Inteligente Smart Life -->
+                    <div class="p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                ⚡ Tomada Inteligente
+                            </h3>
+                            <span id="status-tomada-direta" class="text-xs font-semibold text-amber-500">Pronto</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="controlarTomadaDireta('ligar')" class="py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold text-sm transition active:scale-95">
+                                🟢 Ligar
+                            </button>
+                            <button onclick="controlarTomadaDireta('desligar')" class="py-2 px-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-semibold text-sm transition active:scale-95">
+                                🔴 Desligar
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Atalhos IA -->
                     <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
                         <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -290,29 +249,19 @@ async function dispararBomDia() {
 
             <!-- Abas de Funcionalidades -->
             <div class="mt-8">
-                <div class="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-800">
-                    <button onclick="mudarAba('despensa')" class="aba-btn active px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400">
+                <div class="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
+                    <button onclick="mudarAba('despensa')" class="aba-btn px-4 py-3 font-semibold text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500">
                         🍎 Despensa
                     </button>
                     <button onclick="mudarAba('automacoes')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
                         🔧 Automações
                     </button>
                     <button onclick="mudarAba('tuya')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
-    🏠 Tuya
-</button>
-<!-- ABA: Tuya Devices -->
-<div id="aba-tuya" class="aba-content hidden">
-    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-        
-        <h2 class="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-            🏠 Dispositivos Tuya
-        </h2>
-
-        <div id="tuya-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Preenchido por JavaScript -->
-        </div>
-    </div>
-</div>
+                        🏠 Tuya
+                    </button>
+                    <button onclick="mudarAba('praia')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
+                        🏖️ Praia
+                    </button>
                     <button onclick="mudarAba('historico')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
                         📜 Histórico
                     </button>
@@ -321,37 +270,26 @@ async function dispararBomDia() {
                 <!-- ABA: Despensa -->
                 <div id="aba-despensa" class="aba-content">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
-                        <!-- Adicionar Item -->
                         <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
                             <h3 class="font-bold text-gray-900 dark:text-white mb-4">➕ Novo Item</h3>
                             <div class="space-y-3">
-                                <input type="text" id="despensa-item" placeholder="Nome do item" 
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
-                                <input type="number" id="despensa-qtd" placeholder="Quantidade" 
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="text" id="despensa-item" placeholder="Nome do item" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="number" id="despensa-qtd" placeholder="Quantidade" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
                                 <select id="despensa-unidade" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
                                     <option value="kg">kg</option>
                                     <option value="L">L</option>
                                     <option value="un">un</option>
                                 </select>
-                                <input type="date" id="despensa-validade" 
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
-                                <input type="number" id="despensa-consumo" placeholder="Consumo diário" value="0.2" step="0.1"
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
-                                <button onclick="adicionarItemDespensa()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
-                                    Adicionar
-                                </button>
+                                <input type="date" id="despensa-validade" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="number" id="despensa-consumo" placeholder="Consumo diário" value="0.2" step="0.1" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <button onclick="adicionarItemDespensa()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">Adicionar</button>
                             </div>
                         </div>
 
-                        <!-- Lista -->
                         <div class="lg:col-span-2">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="font-bold text-gray-900 dark:text-white">Itens em Estoque</h3>
-                                <button onclick="sugerirReceitas()" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition">
-                                    🧑‍🍳 Receitas IA
-                                </button>
+                                <button onclick="sugerirReceitas()" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition">🧑‍🍳 Receitas IA</button>
                             </div>
                             <div class="space-y-3 max-h-96 overflow-y-auto">
                                 <div id="tabela-despensa-moderna"></div>
@@ -359,126 +297,108 @@ async function dispararBomDia() {
                         </div>
                     </div>
                 </div>
-<button onclick="mudarAba('praia')" class="aba-btn px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300">
-    🏖️ Praia
-</button>
+
                 <!-- ABA: Automações -->
                 <div id="aba-automacoes" class="aba-content hidden">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
-                        <!-- Criar Automação -->
                         <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
                             <h3 class="font-bold text-gray-900 dark:text-white mb-4">⚙️ Nova Automação</h3>
                             <div class="space-y-3">
-                                <input type="text" id="auto-nome" placeholder="Nome (ex: Luzes noturnas)" 
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
-                                <input type="text" id="auto-condicao" placeholder="Condição (ex: temperatura > 28)" 
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
-                                <input type="text" id="auto-acao" placeholder="Ação (ex: ligar AC)" 
-                                       class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
-                                <button onclick="criarAutomacao()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">
-                                    Criar
-                                </button>
+                                <input type="text" id="auto-nome" placeholder="Nome (ex: Luzes noturnas)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="text" id="auto-condicao" placeholder="Condição (ex: temperatura > 28)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <input type="text" id="auto-acao" placeholder="Ação (ex: ligar AC)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                <button onclick="criarAutomacao()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition">Criar</button>
                             </div>
                         </div>
 
-                        <!-- Automações Ativas -->
                         <div class="lg:col-span-2">
                             <h3 class="font-bold text-gray-900 dark:text-white mb-4">🤖 Regras Ativas</h3>
                             <div id="lista-automacoes" class="space-y-3"></div>
                         </div>
                     </div>
                 </div>
-<!-- ABA: Praia & Maré -->
-<div id="aba-praia" class="aba-content hidden">
-    <div class="space-y-6">
-        
-        <!-- Seletor de Cidade -->
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-            <h3 class="font-bold text-gray-900 dark:text-white mb-4">🌍 Escolha sua Cidade</h3>
-            
-            <div class="flex gap-2">
-                <select id="cidade-select" class="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
-                    <option value="Recife">🏖️ Recife</option>
-                    <option value="Rio de Janeiro">🏖️ Rio de Janeiro</option>
-                    <option value="Salvador">🏖️ Salvador</option>
-                    <option value="Fortaleza">🏖️ Fortaleza</option>
-                    <option value="Natal">🏖️ Natal</option>
-                    <option value="Maceió">🏖️ Maceió</option>
-                </select>
-                <button onclick="atualizarClima()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
-                    🔄 Atualizar
-                </button>
-            </div>
-        </div>
 
-        <!-- Clima Atual -->
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-            <h3 class="text-lg font-bold mb-4">🌡️ Clima Atual</h3>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-sm opacity-80">Temperatura</p>
-                    <p id="clima-temp" class="text-3xl font-bold">--°C</p>
+                <!-- ABA: Tuya -->
+                <div id="aba-tuya" class="aba-content hidden">
+                    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                        <h2 class="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">🏠 Dispositivos Tuya</h2>
+                        <div id="tuya-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm opacity-80">Sensação</p>
-                    <p id="clima-sensacao" class="text-3xl font-bold">--°C</p>
-                </div>
-                <div>
-                    <p class="text-sm opacity-80">Umidade</p>
-                    <p id="clima-umidade" class="text-2xl font-bold">--%</p>
-                </div>
-                <div>
-                    <p class="text-sm opacity-80">Vento</p>
-                    <p id="clima-vento" class="text-2xl font-bold">-- km/h</p>
-                </div>
-            </div>
-            
-            <div class="mt-4 pt-4 border-t border-white/20">
-                <p class="text-sm opacity-90">Condição:</p>
-                <p id="clima-condicao" class="text-lg font-semibold">Carregando...</p>
-            </div>
-        </div>
 
-        <!-- Dados de Maré -->
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-            <h3 class="text-lg font-bold mb-4">🌊 Dados de Maré</h3>
-            
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <p class="text-sm opacity-80">Próxima Maré Alta</p>
-                    <p id="mare-alta" class="text-2xl font-bold">--:--</p>
-                </div>
-                <div>
-                    <p class="text-sm opacity-80">Próxima Maré Baixa</p>
-                    <p id="mare-baixa" class="text-2xl font-bold">--:--</p>
-                </div>
-            </div>
-            
-            <div class="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-                <p class="text-sm opacity-90">📍 Melhor horário para praia:</p>
-                <p id="mare-melhor-hora" class="text-2xl font-bold">--:--</p>
-                <p id="mare-condicao" class="text-sm opacity-90 mt-2">Carregando...</p>
-            </div>
-        </div>
+                <!-- ABA: Praia & Maré -->
+                <div id="aba-praia" class="aba-content hidden">
+                    <div class="space-y-6">
+                        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-4">🌍 Escolha sua Cidade</h3>
+                            <div class="flex gap-2">
+                                <select id="cidade-select" class="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                                    <option value="Recife">🏖️ Recife</option>
+                                    <option value="Rio de Janeiro">🏖️ Rio de Janeiro</option>
+                                    <option value="Salvador">🏖️ Salvador</option>
+                                    <option value="Fortaleza">🏖️ Fortaleza</option>
+                                    <option value="Natal">🏖️ Natal</option>
+                                    <option value="Maceió">🏖️ Maceió</option>
+                                </select>
+                                <button onclick="atualizarClima()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">🔄 Atualizar</button>
+                            </div>
+                        </div>
 
-        <!-- Sugestão IA -->
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-            <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                🤖 Sugestão Inteligente
-            </h3>
-            
-            <div id="sugestao-praia" class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                <p class="text-gray-600 dark:text-gray-300">Carregando sugestão...</p>
-            </div>
-            
-            <button onclick="obterSugestaoIA()" class="w-full mt-4 py-2 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-semibold transition">
-                💡 Obter Sugestão
-            </button>
-        </div>
-    </div>
-</div>
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                            <h3 class="text-lg font-bold mb-4">🌡️ Clima Atual</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm opacity-80">Temperatura</p>
+                                    <p id="clima-temp" class="text-3xl font-bold">--°C</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm opacity-80">Sensação</p>
+                                    <p id="clima-sensacao" class="text-3xl font-bold">--°C</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm opacity-80">Umidade</p>
+                                    <p id="clima-umidade" class="text-2xl font-bold">--%</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm opacity-80">Vento</p>
+                                    <p id="clima-vento" class="text-2xl font-bold">-- km/h</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-white/20">
+                                <p class="text-sm opacity-90">Condição:</p>
+                                <p id="clima-condicao" class="text-lg font-semibold">Carregando...</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                            <h3 class="text-lg font-bold mb-4">🌊 Dados de Maré</h3>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-sm opacity-80">Próxima Maré Alta</p>
+                                    <p id="mare-alta" class="text-2xl font-bold">--:--</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm opacity-80">Próxima Maré Baixa</p>
+                                    <p id="mare-baixa" class="text-2xl font-bold">--:--</p>
+                                </div>
+                            </div>
+                            <div class="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+                                <p class="text-sm opacity-90">📍 Melhor horário para praia:</p>
+                                <p id="mare-melhor-hora" class="text-2xl font-bold">--:--</p>
+                                <p id="mare-condicao" class="text-sm opacity-90 mt-2">Carregando...</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">🤖 Sugestão Inteligente</h3>
+                            <div id="sugestao-praia" class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                <p class="text-gray-600 dark:text-gray-300">Carregando sugestão...</p>
+                            </div>
+                            <button onclick="obterSugestaoIA()" class="w-full mt-4 py-2 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-semibold transition">💡 Obter Sugestão</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ABA: Histórico -->
                 <div id="aba-historico" class="aba-content hidden">
                     <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
@@ -495,22 +415,22 @@ async function dispararBomDia() {
             <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">🧑‍🍳 Sugestão Inteligente</h3>
             <p id="conteudo-receita" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700"></p>
             <div class="text-right">
-                <button onclick="fecharModal()" class="px-4 py-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white rounded-lg transition">
-                    Fechar
-                </button>
+                <button onclick="fecharModal()" class="px-4 py-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white rounded-lg transition">Fechar</button>
             </div>
         </div>
     </div>
 
+    <!-- SCRIPT UNIFICADO -->
     <script>
-        // ========== VARIÁVEIS GLOBAIS ==========
-        let tema_atual = localStorage.getItem("tema") || "light";
-        let aba_atual = "despensa";
+        const CONFIG_TOMADA_LOCAL = {
+            device_id: "SEU_DEVICE_ID",
+            ip: "192.168.10.X",
+            local_key: "SUA_LOCAL_KEY"
+        };
 
-        // ========== TEMA (DARK/LIGHT) ==========
-        function inicializarTema() {
-            aplicarTema(tema_atual);
-        }
+        let tema_atual = localStorage.getItem("tema") || "light";
+
+        function inicializarTema() { aplicarTema(tema_atual); }
 
         function alterarTema() {
             tema_atual = tema_atual === "light" ? "dark" : "light";
@@ -523,58 +443,18 @@ async function dispararBomDia() {
             document.body.classList.remove("light", "dark");
             document.documentElement.classList.add(t);
             document.body.classList.add(t);
-            
             const icon = document.getElementById("icon-tema");
-            icon.textContent = t === "light" ? "🌙" : "☀️";
+            if (icon) icon.textContent = t === "light" ? "🌙" : "☀️";
         }
 
-        // ========== WEBSOCKET (TELEMETRIA) ==========
-        const ws = new WebSocket(`ws://${window.location.host}/ws`);
-        
-        ws.onopen = () => {
-            atualizarStatusConexao(true);
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const dados = JSON.parse(event.data);
-                if (dados.tipo === "telemetria") {
-                    document.getElementById("temp-valor").textContent = dados.temperatura.toFixed(1);
-                    document.getElementById("umidade-valor").textContent = dados.umidade.toFixed(0);
-                    document.getElementById("dispositivo-info").textContent = `📡 ${dados.dispositivo_id}`;
-                }
-            } catch (e) { console.error(e); }
-        };
-
-        ws.onclose = () => {
-            atualizarStatusConexao(false);
-        };
-
-        function atualizarStatusConexao(conectado) {
-            const dot = document.getElementById("status-dot");
-            const text = document.getElementById("status-text");
-            if (conectado) {
-                dot.classList.add("bg-emerald-500");
-                dot.classList.remove("bg-gray-400");
-                text.textContent = "Sistema Online";
-            } else {
-                dot.classList.remove("bg-emerald-500");
-                dot.classList.add("bg-gray-400");
-                text.textContent = "Desconectado";
-            }
-        }
-
-        // ========== IA & CHAT ==========
-        async function enviarPerguntaIA() {
+        // ========== IA & CHAT COM SUPORTE A VOZ ==========
+        async function enviarPerguntaIA(textoCustomizado = null) {
             const input = document.getElementById("input-ia");
-            const pergunta = input.value.trim();
-            
+            const pergunta = textoCustomizado || input.value.trim();
             if (!pergunta) return;
             
-            // Mostrar pergunta do usuário
             adicionarMensagemChat(pergunta, "usuario");
-            input.value = "";
-            input.focus();
+            if (!textoCustomizado) input.value = "";
             
             try {
                 const res = await fetch("/api/ia/pergunta", {
@@ -589,6 +469,47 @@ async function dispararBomDia() {
             }
         }
 
+        function ouvirVozEPerguntar() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                alert("O seu navegador não suporta reconhecimento de voz.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+
+            const btn = document.getElementById("btn-voz");
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = "🎙️ <span class='hidden sm:inline'>A escutar...</span>";
+            btn.classList.add("bg-red-600", "animate-pulse");
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                btn.innerHTML = textoOriginal;
+                btn.classList.remove("bg-red-600", "animate-pulse");
+                const textoFalado = event.results[0][0].transcript;
+                console.log("Você disse:", textoFalado);
+
+                // Envia a pergunta dita por voz
+                enviarPerguntaIA(textoFalado);
+            };
+
+            recognition.onerror = function(event) {
+                btn.innerHTML = textoOriginal;
+                btn.classList.remove("bg-red-600", "animate-pulse");
+                alert("Não foi possível ouvir a sua voz: " + event.error);
+            };
+
+            recognition.onend = function() {
+                btn.innerHTML = textoOriginal;
+                btn.classList.remove("bg-red-600", "animate-pulse");
+            };
+        }
+
         function adicionarMensagemChat(texto, tipo) {
             const container = document.getElementById("chat-container");
             const msg = document.createElement("div");
@@ -601,7 +522,7 @@ async function dispararBomDia() {
                     </div>
                     <span class="text-xl">👤</span>
                 `;
-            } else if (tipo === "ia") {
+            } else {
                 msg.innerHTML = `
                     <span class="text-xl">🤖</span>
                     <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 max-w-xs">
@@ -615,565 +536,64 @@ async function dispararBomDia() {
         }
 
         function perguntaRapida(texto) {
-            document.getElementById("input-ia").value = texto;
-            enviarPerguntaIA();
+            enviarPerguntaIA(texto);
         }
 
-        // ========== COMANDOS ==========
-        async function enviarComandoDireto(acao) {
+        // ========== DEMAIS RECURSOS DO DASHBOARD ==========
+        async function dispararBomDia() {
             try {
-                const res = await fetch("/executar-comando", {
+                const res = await fetch('/api/automacao/bom-dia', { method: 'POST' });
+                const dados = await res.json();
+                if (dados.status === 'sucesso') {
+                    alert("CasaIA falou: " + dados.mensagem_falada);
+                } else {
+                    alert("Erro ao tocar áudio: " + (dados.mensagem || "Erro desconhecido"));
+                }
+            } catch (err) { alert("Erro ao comunicar com o servidor."); }
+        }
+
+        function alimentarGato() {
+            fetch('/api/alimentar', { method: 'POST' })
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) alert(data.detail || "Erro no servidor ao tentar acionar o Arduino.");
+                    else alert(data.mensagem);
+                })
+                .catch(error => alert("Erro de conexão com o servidor."));
+        }
+
+        async function controlarTomadaDireta(acao) {
+            const statusElem = document.getElementById("status-tomada-direta");
+            if (statusElem) statusElem.innerText = "A processar...";
+            try {
+                const res = await fetch("/api/tomada/controlar", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ comando: acao })
+                    body: JSON.stringify({ ...CONFIG_TOMADA_LOCAL, acao })
                 });
                 const dados = await res.json();
-                adicionarMensagemChat(dados.resposta, "ia");
-            } catch (e) {
-                adicionarMensagemChat("Erro ao executar comando", "erro");
-            }
+                if (dados.status === "sucesso" && statusElem) statusElem.innerText = `Estado: ${dados.estado.toUpperCase()}`;
+                else if (statusElem) statusElem.innerText = "Erro no envio";
+            } catch (e) { if (statusElem) statusElem.innerText = "Erro de conexão"; }
         }
 
-        // ========== MODO CASA ==========
+        async function enviarComandoDireto(acao) {
+            enviarPerguntaIA(`Executar comando: ${acao}`);
+        }
+
         async function alterarModo(modo) {
-            await fetch(`/api/modo?modo=${modo}`, { method: "POST" });
             alert(`Modo alterado para: ${modo}`);
         }
 
-        // ========== DESPENSA ==========
-        async function carregarDespensa() {
-            try {
-                const res = await fetch("/api/despensa");
-                const itens = await res.json();
-                const container = document.getElementById("tabela-despensa-moderna");
-                container.innerHTML = "";
-                
-                itens.forEach(item => {
-                    let badge = "✅ OK";
-                    let cor = "emerald";
-                    if (item.status_validade === "CRÍTICO") {
-                        badge = "⚠️ CRÍTICO";
-                        cor = "rose";
-                    } else if (item.status_validade === "ALERTA") {
-                        badge = "⚠️ ALERTA";
-                        cor = "amber";
-                    }
-                    
-                    const div = document.createElement("div");
-                    div.className = `bg-${cor}-50 dark:bg-${cor}-900/20 border border-${cor}-200 dark:border-${cor}-800 rounded-lg p-3 fade-in`;
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <p class="font-bold text-gray-900 dark:text-white">${item.item}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">${item.quantidade} ${item.unidade}</p>
-                            </div>
-                            <button onclick="deletarItem(${item.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs">✕</button>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs bg-${cor}-100 dark:bg-${cor}-800 text-${cor}-700 dark:text-${cor}-300 px-2 py-1 rounded">${badge}</span>
-                            <span class="text-xs text-gray-500">Vence em ${item.dias_para_estragar}d</span>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        async function adicionarItemDespensa() {
-            const item = document.getElementById("despensa-item").value;
-            const quantidade = parseFloat(document.getElementById("despensa-qtd").value);
-            const unidade = document.getElementById("despensa-unidade").value;
-            const validade = document.getElementById("despensa-validade").value;
-            const consumo = parseFloat(document.getElementById("despensa-consumo").value);
-            
-            if (!item || !quantidade || !validade) {
-                alert("Preencha todos os campos!");
-                return;
-            }
-            
-            await fetch("/api/despensa", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ item, quantidade, unidade, validade, consumo_diario: consumo })
-            });
-            
-            document.getElementById("despensa-item").value = "";
-            document.getElementById("despensa-qtd").value = "";
-            document.getElementById("despensa-validade").value = "";
-            
-            carregarDespensa();
-        }
-
-        async function deletarItem(id) {
-            await fetch(`/api/despensa/${id}`, { method: "DELETE" });
-            carregarDespensa();
-        }
-
-        async function sugerirReceitas() {
-            try {
-                const res = await fetch("/api/despensa/receitas", { method: "POST" });
-                const dados = await res.json();
-                document.getElementById("conteudo-receita").textContent = dados.receita;
-                document.getElementById("modal-receita").classList.remove("hidden");
-            } catch (e) {
-                alert("Erro ao carregar receitas");
-            }
-        }
-
-        function fecharModal() {
-            document.getElementById("modal-receita").classList.add("hidden");
-        }
-
-        // ========== AUTOMAÇÕES ==========
-        async function carregarAutomacoes() {
-            try {
-                const res = await fetch("/api/automacoes");
-                const autos = await res.json();
-                const container = document.getElementById("lista-automacoes");
-                container.innerHTML = "";
-                
-                autos.forEach(auto => {
-                    const div = document.createElement("div");
-                    div.className = "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4";
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-gray-900 dark:text-white">${auto.nome}</h4>
-                            <button onclick="deletarAutomacao(${auto.id})" class="text-rose-500 text-xs font-bold">Remover</button>
-                        </div>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">📊 Se: ${auto.condicao}</p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">⚙️ Então: ${auto.acao}</p>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        async function criarAutomacao() {
-            const nome = document.getElementById("auto-nome").value;
-            const condicao = document.getElementById("auto-condicao").value;
-            const acao = document.getElementById("auto-acao").value;
-            
-            if (!nome || !condicao || !acao) {
-                alert("Preencha todos os campos!");
-                return;
-            }
-            
-            await fetch("/api/automacoes", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, condicao, acao })
-            });
-            
-            document.getElementById("auto-nome").value = "";
-            document.getElementById("auto-condicao").value = "";
-            document.getElementById("auto-acao").value = "";
-            
-            carregarAutomacoes();
-        }
-
-        async function deletarAutomacao(id) {
-            await fetch(`/api/automacoes/${id}`, { method: "DELETE" });
-            carregarAutomacoes();
-        }
-
-        // ========== HISTÓRICO ==========
-        async function carregarHistorico() {
-            try {
-                const res = await fetch("/api/historico?limite=15");
-                const comandos = await res.json();
-                const container = document.getElementById("historico-comandos");
-                container.innerHTML = "";
-                
-                comandos.forEach(cmd => {
-                    const div = document.createElement("div");
-                    div.className = "p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition";
-                    const hora = new Date(cmd.timestamp).toLocaleTimeString('pt-BR');
-                    div.innerHTML = `
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">💬 ${escapeHtml(cmd.comando)}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${cmd.resposta}</p>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">⏰ ${hora}</p>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        // ========== ABAS ==========
-        // ========== NAVEGAÇÃO UNIFICADA DE ABAS ==========
-function mudarAba(aba) {
-    // Esconde todos os conteúdos de abas
-    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
-    
-    // Reseta o estilo de todos os botões de abas
-    document.querySelectorAll(".aba-btn").forEach(el => {
-        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-        el.classList.add("border-b-2", "border-transparent");
-    });
-    
-    // Exibe a aba selecionada
-    const abaEl = document.getElementById(`aba-${aba}`);
-    if (abaEl) abaEl.classList.remove("hidden");
-    
-    // Destaca o botão ativado se o evento existir
-    if (window.event && window.event.target) {
-        window.event.target.classList.remove("border-transparent");
-        window.event.target.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-    }
-    
-    // Executa o carregamento específico de cada aba
-    if (aba === "despensa") carregarDespensa();
-    if (aba === "automacoes") carregarAutomacoes();
-    if (aba === "tuya") carregarDispositivosTuya();
-    if (aba === "praia") atualizarClima();
-    if (aba === "historico") carregarHistorico();
-}
-
-        // ========== UTILITÁRIOS ==========
         function escapeHtml(texto) {
             const div = document.createElement("div");
             div.textContent = texto;
             return div.innerHTML;
         }
 
-        // ========== INICIALIZAÇÃO ==========
         document.addEventListener("DOMContentLoaded", () => {
             inicializarTema();
-            carregarDespensa();
-            carregarAutomacoes();
         });
-
-        // ========== TUYA DEVICES ==========
-async function carregarDispositivosTuya() {
-    try {
-        const res = await fetch("/api/tuya/dispositivos");
-        const dispositivos = await res.json();
-        
-        const container = document.getElementById("tuya-lista");
-        container.innerHTML = "";
-        
-        dispositivos.forEach(d => {
-            const icone = d.tipo === "luz" ? "💡" : "🔌";
-            const status = d.status === "offline" ? "❌ Offline" : "✅ Online";
-            
-            const html = `
-                <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <p class="font-bold text-gray-900 dark:text-white">${icone} ${d.nome}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${d.tipo}</p>
-                        </div>
-                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded">
-                            ${status}
-                        </span>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <button onclick="controlarTuya('${d.nome}', true)" 
-                                class="w-full py-2 px-3 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded transition">
-                            ✅ Ligar
-                        </button>
-                        <button onclick="controlarTuya('${d.nome}', false)" 
-                                class="w-full py-2 px-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded transition">
-                            ❌ Desligar
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.innerHTML += html;
-        });
-    } catch (e) {
-        console.error("Erro ao carregar Tuya", e);
-        document.getElementById("tuya-lista").innerHTML = '<p class="text-red-600">Erro ao conectar Tuya</p>';
-    }
-}
-
-async function controlarTuya(nome, estado) {
-    try {
-        const res = await fetch(`/api/tuya/controlar?nome=${nome}&estado=${estado}`, {
-            method: "POST"
-        });
-        const dados = await res.json();
-        
-        if (dados.sucesso) {
-            adicionarMensagemChat(`🏠 ${nome}: ${dados.estado}`, "ia");
-            await carregarDispositivosTuya();
-        } else {
-            alert(`Erro: ${dados.erro}`);
-        }
-    } catch (e) {
-        console.error("Erro ao controlar Tuya", e);
-        alert("Erro ao controlar dispositivo");
-    }
-}
-
-// Carregar Tuya ao abrir aba
-function mudarAba(aba) {
-    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
-    document.querySelectorAll(".aba-btn").forEach(el => {
-        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-        el.classList.add("border-b-2", "border-transparent");
-    });
-    
-    document.getElementById(`aba-${aba}`).classList.remove("hidden");
-    event.target.classList.remove("border-transparent");
-    event.target.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-    
-    if (aba === "tuya") {
-        carregarDispositivosTuya();
-    }
-}
-
-// ========== PRAIA & MARÉ ==========
-async function atualizarClima() {
-    try {
-        const cidade = document.getElementById("cidade-select").value;
-        
-        const res = await fetch(`/api/clima/atualizar/${cidade}`, {
-            method: "POST"
-        });
-        
-        const dados = await res.json();
-        
-        // Atualizar clima
-        document.getElementById("clima-temp").textContent = dados.clima.temperatura.toFixed(1) + "°C";
-        document.getElementById("clima-sensacao").textContent = dados.clima.sensacao.toFixed(1) + "°C";
-        document.getElementById("clima-umidade").textContent = dados.clima.umidade + "%";
-        document.getElementById("clima-vento").textContent = dados.clima.velocidade_vento.toFixed(0) + " km/h";
-        document.getElementById("clima-condicao").textContent = dados.clima.condicao;
-        
-        // Atualizar maré
-        document.getElementById("mare-alta").textContent = dados.mare.proxima_alta;
-        document.getElementById("mare-baixa").textContent = dados.mare.proxima_baixa;
-        document.getElementById("mare-melhor-hora").textContent = dados.mare.melhor_hora;
-        document.getElementById("mare-condicao").textContent = dados.mare.condicao;
-        
-    } catch (e) {
-        console.error("Erro ao atualizar clima", e);
-        alert("Erro ao atualizar dados");
-    }
-}
-
-async function obterSugestaoIA() {
-    try {
-        const container = document.getElementById("sugestao-praia");
-        container.innerHTML = '<p class="text-gray-500">🤖 A IA está gerando sua dica de praia...</p>';
-        
-        const res = await fetch("/api/praia/sugestao");
-        const dados = await res.json();
-        
-        container.innerHTML = `
-            <div class="space-y-3">
-                <div>
-                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
-                    <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
-                </div>
-                <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
-                    <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
-                </div>
-            </div>
-        `;
-    } catch (e) {
-        console.error("Erro ao obter sugestão:", e);
-        document.getElementById("sugestao-praia").innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
-    }
-}
-
-// Carregar ao abrir aba
-function mudarAba(aba) {
-    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
-    document.querySelectorAll(".aba-btn").forEach(el => {
-        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-        el.classList.add("border-b-2", "border-transparent");
-    });
-    
-    document.getElementById(`aba-${aba}`).classList.remove("hidden");
-    event.target.classList.remove("border-transparent");
-    event.target.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-    
-    if (aba === "praia") {
-        atualizarClima();
-    }
-}
-async function obterSugestaoIA() {
-    try {
-        const container = document.getElementById("sugestao-praia");
-        container.innerHTML = '<p class="text-gray-500">🤖 A IA está gerando sua dica de praia...</p>';
-        
-        const res = await fetch("/api/praia/sugestao");
-        const dados = await res.json();
-        
-        container.innerHTML = `
-            <div class="space-y-3">
-                <div>
-                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
-                    <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
-                </div>
-                <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
-                    <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
-                </div>
-            </div>
-        `;
-    } catch (e) {
-        console.error("Erro ao obter sugestão:", e);
-        document.getElementById("sugestao-praia").innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
-    }
-}
-// ========== MÓDULO PRAIA & CLIMA ==========
-async function atualizarClima() {
-    const cidadeSelect = document.getElementById("select-cidade");
-    const cidade = cidadeSelect ? cidadeSelect.value : "Recife";
-    
-    try {
-        const response = await fetch(`/api/clima/atualizar/${encodeURIComponent(cidade)}`, {
-            method: "POST"
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-        }
-        
-        const dados = await response.json();
-        
-        // Atualiza dados na tela
-        if (document.getElementById("temp-atual")) document.getElementById("temp-atual").innerText = `${dados.temperatura || '--'}°C`;
-        if (document.getElementById("sensacao-atual")) document.getElementById("sensacao-atual").innerText = `${dados.sensacao || '--'}°C`;
-        if (document.getElementById("umidade-atual")) document.getElementById("umidade-atual").innerText = `${dados.umidade || '--'}%`;
-        if (document.getElementById("vento-atual")) document.getElementById("vento-atual").innerText = `${dados.vento || '--'} km/h`;
-        if (document.getElementById("condicao-atual")) document.getElementById("condicao-atual").innerText = dados.condicao || 'Desconhecido';
-        
-        // Atualiza Maré
-        if (document.getElementById("mare-alta")) document.getElementById("mare-alta").innerText = dados.proxima_alta || '--:--';
-        if (document.getElementById("mare-baixa")) document.getElementById("mare-baixa").innerText = dados.proxima_baixa || '--:--';
-        if (document.getElementById("melhor-horario")) document.getElementById("melhor-horario").innerText = dados.melhor_hora || '--:--';
-        if (document.getElementById("condicao-mare")) document.getElementById("condicao-mare").innerText = dados.condicao_mare || 'Normal';
-        
-        obterSugestaoIA();
-
-    } catch (e) {
-        console.error("Erro ao atualizar clima:", e);
-    }
-}
-
-async function obterSugestaoIA() {
-    const container = document.getElementById("sugestao-praia");
-    if (!container) return;
-    
-    try {
-        container.innerHTML = '<p class="text-gray-500">🤖 A IA está gerando sua dica de praia...</p>';
-        const res = await fetch("/api/praia/sugestao");
-        const dados = await res.json();
-        
-        container.innerHTML = `
-            <div class="space-y-3">
-                <div>
-                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
-                    <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
-                </div>
-                <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
-                    <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
-                </div>
-            </div>
-        `;
-    } catch (e) {
-        console.error("Erro ao obter sugestão:", e);
-        container.innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
-    }
-}
-
-// ========== NAVEGAÇÃO ENTRE ABAS ==========
-function mudarAba(aba) {
-    document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
-    
-    document.querySelectorAll(".aba-btn").forEach(el => {
-        el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-        el.classList.add("border-b-2", "border-transparent");
-    });
-    
-    const abaEl = document.getElementById(`aba-${aba}`);
-    if (abaEl) abaEl.classList.remove("hidden");
-    
-    if (window.event && window.event.currentTarget) {
-        window.event.currentTarget.classList.remove("border-transparent");
-        window.event.currentTarget.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
-    }
-    
-    if (aba === "despensa" && typeof carregarDespensa === "function") carregarDespensa();
-    if (aba === "automacoes" && typeof carregarAutomacoes === "function") carregarAutomacoes();
-    if (aba === "tuya" && typeof carregarDispositivosTuya === "function") carregarDispositivosTuya();
-    if (aba === "praia") atualizarClima();
-    if (aba === "historico" && typeof carregarHistorico === "function") carregarHistorico();
-}
-
-// Configuração Local da Tomada Smart Life
-const CONFIG_TOMADA_LOCAL = {
-  device_id: "SEU_DEVICE_ID", // Atualize quando chegar a casa
-  ip: "192.168.10.X",         // IP da tomada no Wi-Fi
-  local_key: "SUA_LOCAL_KEY"  // Chave obtida localmente
-};
-
-async function controlarTomadaDireta(acao) {
-  const statusElem = document.getElementById("status-tomada-direta");
-  if (statusElem) statusElem.innerText = "A processar...";
-
-  try {
-    const res = await fetch("/api/tomada/controlar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...CONFIG_TOMADA_LOCAL,
-        acao: acao
-      })
-    });
-    
-    const dados = await res.json();
-    if (dados.status === "sucesso") {
-      if (statusElem) statusElem.innerText = `Estado: ${dados.estado.toUpperCase()}`;
-    } else {
-      if (statusElem) statusElem.innerText = "Erro no envio";
-      alert("Erro ao comunicar com a tomada: " + (dados.mensagem || "Verifique o IP/Key"));
-    }
-  } catch (e) {
-    console.error("Erro na tomada:", e);
-    if (statusElem) statusElem.innerText = "Erro de conexão";
-  }
-}
-
-
-    <script>
-async function carregarClima() {
-    try {
-        const res = await fetch('/api/clima?cidade=Recife');
-        const dados = await res.json();
-        
-        if (dados.status === 'sucesso') {
-            const tempElem = document.getElementById('temp-val');
-            if (tempElem) tempElem.innerText = `${dados.temperatura}°C`;
-
-            const sensElem = document.getElementById('sensacao-val');
-            if (sensElem) sensElem.innerText = `${dados.sensacao}°C`;
-
-            const umidElem = document.getElementById('umidade-val');
-            if (umidElem) umidElem.innerText = `${dados.humidade}%`;
-
-            const ventoElem = document.getElementById('vento-val');
-            if (ventoElem) ventoElem.innerText = `${dados.vento} km/h`;
-
-            const condElem = document.getElementById('condicao-val');
-            if (condElem) condElem.innerText = dados.condicao;
-
-            const mareAltaElem = document.getElementById('mare-alta-val');
-            if (mareAltaElem) mareAltaElem.innerText = dados.mare_alta;
-
-            const mareBaixaElem = document.getElementById('mare-baixa-val');
-            if (mareBaixaElem) mareBaixaElem.innerText = dados.mare_baixa;
-        }
-    } catch (err) {
-        console.error("Erro ao carregar dados de clima:", err);
-    }
-}
-
-// Carrega automaticamente ao abrir a página
-window.addEventListener('DOMContentLoaded', carregarClima);
-</script>
+    </script>
 </body>
 </html>
