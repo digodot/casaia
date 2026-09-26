@@ -447,6 +447,81 @@
             if (icon) icon.textContent = t === "light" ? "🌙" : "☀️";
         }
 
+        // ========== NAVEGAÇÃO ENTRE ABAS ==========
+        function mudarAba(aba) {
+            document.querySelectorAll(".aba-content").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll(".aba-btn").forEach(el => {
+                el.classList.remove("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+                el.classList.add("border-b-2", "border-transparent");
+            });
+            
+            const abaEl = document.getElementById(`aba-${aba}`);
+            if (abaEl) abaEl.classList.remove("hidden");
+            
+            if (window.event && window.event.currentTarget) {
+                window.event.currentTarget.classList.remove("border-transparent");
+                window.event.currentTarget.classList.add("border-b-2", "border-blue-600", "dark:border-blue-500", "text-blue-600", "dark:text-blue-400");
+            }
+            
+            if (aba === "despensa" && typeof carregarDespensa === 'function') carregarDespensa();
+            if (aba === "automacoes" && typeof carregarAutomacoes === 'function') carregarAutomacoes();
+            if (aba === "tuya" && typeof carregarDispositivosTuya === 'function') carregarDispositivosTuya();
+            if (aba === "praia") atualizarClima();
+            if (aba === "historico" && typeof carregarHistorico === 'function') carregarHistorico();
+        }
+
+        // ========== PRAIA & CLIMA ==========
+        async function atualizarClima() {
+            const select = document.getElementById("cidade-select");
+            const cidade = select ? select.value : "Recife";
+            
+            try {
+                const res = await fetch(`/api/clima/atualizar/${encodeURIComponent(cidade)}`, { method: "POST" });
+                const dados = await res.json();
+                
+                if (dados.clima) {
+                    document.getElementById("clima-temp").textContent = `${dados.clima.temperatura.toFixed(1)}°C`;
+                    document.getElementById("clima-sensacao").textContent = `${dados.clima.sensacao.toFixed(1)}°C`;
+                    document.getElementById("clima-umidade").textContent = `${dados.clima.umidade}%`;
+                    document.getElementById("clima-vento").textContent = `${dados.clima.velocidade_vento.toFixed(0)} km/h`;
+                    document.getElementById("clima-condicao").textContent = dados.clima.condicao;
+                }
+                if (dados.mare) {
+                    document.getElementById("mare-alta").textContent = dados.mare.proxima_alta || '--:--';
+                    document.getElementById("mare-baixa").textContent = dados.mare.proxima_baixa || '--:--';
+                    document.getElementById("mare-melhor-hora").textContent = dados.mare.melhor_hora || '--:--';
+                    document.getElementById("mare-condicao").textContent = dados.mare.condicao || 'Normal';
+                }
+                
+                obterSugestaoIA();
+            } catch (e) { console.error("Erro ao atualizar clima:", e); }
+        }
+
+        async function obterSugestaoIA() {
+            const container = document.getElementById("sugestao-praia");
+            if (!container) return;
+            
+            try {
+                container.innerHTML = '<p class="text-gray-500">🤖 A IA está a gerar a sua dica de praia...</p>';
+                const res = await fetch("/api/praia/sugestao");
+                const dados = await res.json();
+                
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">💡 Recomendação CasaIA:</p>
+                            <p class="text-gray-800 dark:text-gray-200">${dados.sugestao}</p>
+                        </div>
+                        <div class="pt-3 border-t border-amber-200 dark:border-amber-800">
+                            <p class="text-xs font-semibold text-amber-700 dark:text-amber-400">⏰ Horário recomendado: ${dados.melhor_hora}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = '<p class="text-red-500">Erro ao carregar a sugestão da IA.</p>';
+            }
+        }
+
         // ========== IA & CHAT COM SUPORTE A VOZ ==========
         async function enviarPerguntaIA(textoCustomizado = null) {
             const input = document.getElementById("input-ia");
@@ -494,7 +569,6 @@
                 const textoFalado = event.results[0][0].transcript;
                 console.log("Você disse:", textoFalado);
 
-                // Envia a pergunta dita por voz
                 enviarPerguntaIA(textoFalado);
             };
 
